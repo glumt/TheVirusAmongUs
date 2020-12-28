@@ -1,0 +1,235 @@
+<!doctype html> 
+<html lang="en"> 
+<head>  
+    <meta charset="UTF-8" />
+    <title>The Virus Among Us</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.22.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var BootScene = new Phaser.Class({
+ 
+    Extends: Phaser.Scene,
+ 
+    initialize:
+ 
+    function BootScene ()
+    {
+        Phaser.Scene.call(this, { key: 'BootScene' });
+    },
+ 
+    preload: function ()
+    {
+       this.load.tilemapTiledJSON('map','assets/tilemap.json');
+	   this.load.image('mainlevbuild','assets/mainlevbuild.png');
+	   this.load.image('teiletiles','assets/teiletiles.png');
+	   this.load.image('wallstileset','assets/wallstileset.png');
+	   this.load.image('computer','assets/computer.png');
+	   this.load.spritesheet('bluespritesheet','assets/bluespritesheet.png',{ frameWidth: 32, frameHeight: 32 });
+    },
+ 
+    create: function ()
+    {
+        this.scene.start('WorldScene');
+    }
+});
+ 
+var WorldScene = new Phaser.Class({
+ 
+    Extends: Phaser.Scene,
+ 
+    initialize:
+ 
+    function WorldScene ()
+    {
+        Phaser.Scene.call(this, { key: 'WorldScene' });
+    },
+    preload: function ()
+    {
+        
+    },
+    create: function ()
+    {
+			
+        var map = this.make.tilemap({ key: 'map' });
+		
+		var groundtiles = map.addTilesetImage('groundtiles', 'mainlevbuild');
+		var obstacletiles = map.addTilesetImage('obstacleteils','teiletiles');
+		var wallstileset = map.addTilesetImage('wallstileset','wallstileset');
+		
+		var ground = map.createStaticLayer('ground', groundtiles, 0, 0);
+		var obstacles = map.createStaticLayer('obstacles', obstacletiles, 0,0);
+		var walls = map.createStaticLayer('walls', wallstileset, 0,0);
+		walls.setCollisionByExclusion([-1]);
+		 
+		player = this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
+		
+		this.physics.world.bounds.width = map.widthInPixels;
+        this.physics.world.bounds.height = map.heightInPixels;
+        this.player.setCollideWorldBounds(true);
+		
+			
+		this.cursors = this.input.keyboard.createCursorKeys();
+		
+		this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        this.cameras.main.startFollow(this.player);
+        this.cameras.main.roundPixels = true;
+		
+		 this.anims.create({
+            key: 'walk',
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
+            frameRate: 3,
+            repeat: -1
+        });
+        
+       
+		
+		this.physics.add.collider(this.player, walls);
+    },
+	
+	update: function (time, delta)
+	{
+		this.player.body.setVelocity(0);
+ 
+        // Horizontal movement
+        if (this.cursors.left.isDown)
+        {
+            this.player.body.setVelocityX(-80);
+			//this.player.anims.play('walk', true);
+        }
+        else if (this.cursors.right.isDown)
+        {
+            this.player.body.setVelocityX(80);
+			//this.player.anims.play('walk', true);
+        }
+ 
+        // Vertical movement
+        if (this.cursors.up.isDown)
+        {
+            this.player.body.setVelocityY(-80);
+			//this.player.anims.play('walk', true);
+        }
+        else if (this.cursors.down.isDown)
+        {
+            this.player.body.setVelocityY(80);
+			//this.player.anims.play('walk', true);
+        }    
+		
+		 
+		
+	},
+	
+	
+	
+	
+	
+});
+	
+    var config = {
+    type: Phaser.AUTO,
+	parent: 'content',
+    width: 320,
+    height: 240,
+	zoom: 2,
+	pixelArt: true,
+	physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+	},
+    scene: [
+        BootScene,
+        WorldScene
+		]
+    };
+	
+var game = new Phaser.Game(config);
+	
+	
+/*
+    function preload ()
+    {
+		this.load.tilemapTiledJSON('map','assets/map.json');
+		//this.load.image('mapboden','assets/mapboden.png');
+		//this.load.image('mapwaende', 'assets/mapwaende.png');
+		this.load.spritesheet('bluespritesheet','assets/bluespritesheet.png',{ frameWidth: 32, frameHeight: 32 });
+		
+    }
+
+    function create ()
+    {
+		//this.add.image(600, 400, 'mapboden');
+		//this.add.image(600, 400, 'mapwaende');
+		
+		var map = this.make.tilemap({key: 'map'});
+		
+		var tiles = map.addTilesetImage('spritesheet', 'tiles');
+        
+		var Boden = map.createStaticLayer('Boden', tiles, 0, 0);
+        var Teile = map.createStaticLayer('Teile', tiles, 0, 0);
+        obstacles.setCollisionByExclusion([-1]);
+
+		
+		player = this.physics.add.sprite(100, 100, 'bluespritesheet',0);
+
+			
+			player.setCollideWorldBounds(true);
+
+			this.anims.create({
+				key: 'left',
+				frames: this.anims.generateFrameNumbers('bluespritesheet', { start: 0, end: 2 }),
+				frameRate: 10,
+				repeat: -1
+			});
+
+			
+			
+			cursors = this.input.keyboard.createCursorKeys();
+		
+	}
+			
+			
+			
+
+    function update () 
+    {
+				 if (cursors.left.isDown) {
+					player.setVelocityX(-200); //go left
+				}
+				else if (cursors.right.isDown) {
+					player.setVelocityX(200); //go right
+				}
+				else {
+						player.setVelocityX(0); //don't move left or right
+				}
+				
+				if (cursors.up.isDown) {
+			player.setVelocityY(-200); //move up
+					}
+				else if (cursors.down.isDown) {
+					player.setVelocityY(200); //move down
+				}
+				else {
+						player.setVelocityY(0); //don't move up or down
+					}
+				
+		this.cameras.main.centerOn(player.x, player.y);
+		
+		
+	}
+    
+	
+*/
+</script>
+
+</body>
+</html>
