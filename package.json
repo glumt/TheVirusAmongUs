@@ -1,0 +1,33 @@
+{
+  "name": "thevirusamongus",
+  "version": "1.0.0",
+  "description": "An educational version of Among Us with customizable tasks in a computer virus setting",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glumt/thevirusamongus.git"
+  },
+  "keywords": [
+    "virus",
+    "among",
+    "us",
+    "educational",
+    "tasks",
+    "custom"
+  ],
+  "author": "marcus wiens and viktor kroeker",
+  "license": "CC-BY-NC-4.0",
+  "bugs": {
+    "url": "https://github.com/glumt/thevirusamongus/issues"
+  },
+  "homepage": "https://github.com/glumt/thevirusamongus#readme",
+  "dependencies": {
+    "phaser": "^3.50.1"
+  },
+  "devDependencies": {
+    "webpack": "^5.11.0"
+  }
+}
