@@ -35,39 +35,51 @@ class WorldScene extends Phaser.Scene {
 	create() {
 		this.socket = io();
 
-		//Karte wird erstellt
-		var map = this.make.tilemap({ key: 'map' });
+		// create map
+		this.createMap();
 
-		//Texturvariable = Bild im Asset-Ordner (Tileset in der JSON-Map, dazugehöriges Bild im Assets-Ordner )
-		var groundtiles = map.addTilesetImage('groundtiles', 'mainlevbuild');
-		var obstacletiles = map.addTilesetImage('obstacleteils', 'teiletiles');
-		var wallstileset = map.addTilesetImage('wallstileset', 'wallstileset');
-		var objecttiles = map.addTilesetImage('objecttileset', 'objecttiles');
+		// create player animations
+		this.createAnimations();
 
-		//Layervariable = erzeuge Statische Schicht (oder Objekt) (Name des Layers, Tileset in der JSON-Map, Position)
-		var ground = map.createStaticLayer('ground', groundtiles, 0, 0);
-		var obstacles = map.createStaticLayer('obstacles', obstacletiles, 0, 0);
-		var walls = map.createStaticLayer('walls', wallstileset, 0, 0);
-		var objects = map.createStaticLayer('objectlayer', objecttiles, 0, 0);
-		//Collision der Layers
-		walls.setCollisionByExclusion([-1]);
-		objects.setCollisionByExclusion([-1]);
+		// create player
+		this.createPlayer();
 
-		//Erzeugen des Spielers		
-		this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
-		//Erzeugen der Kartengröße und Ränder
-		this.physics.world.bounds.width = map.widthInPixels;
-		this.physics.world.bounds.height = map.heightInPixels;
-		this.player.setCollideWorldBounds(true);
+		//Kollision zwischen Spieler und Wänden (Objekte aktuell deaktiviert)
+		this.physics.add.collider(this.player, this.walls);
 
-		//Erzeugen der Inputs	
+		// update camera
+		this.updateCamera();
+
+		// user input
 		this.cursors = this.input.keyboard.createCursorKeys();
 
-		//Erzeugen der Kamera
-		this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-		this.cameras.main.startFollow(this.player);
-		this.cameras.main.roundPixels = true;
+		// create enemies
+		this.createStations();
+	}
 
+
+	createMap() {
+		//Karte wird erstellt
+		this.map = this.make.tilemap({ key: 'map' });
+
+		//Texturvariable = Bild im Asset-Ordner (Tileset in der JSON-Map, dazugehöriges Bild im Assets-Ordner )
+		var groundtiles = this.map.addTilesetImage('groundtiles', 'mainlevbuild');
+		var obstacletiles = this.map.addTilesetImage('obstacleteils', 'teiletiles');
+		var wallstileset = this.map.addTilesetImage('wallstileset', 'wallstileset');
+		var objecttiles = this.map.addTilesetImage('objecttileset', 'objecttiles');
+
+		//Layervariable = erzeuge Statische Schicht (oder Objekt) (Name des Layers, Tileset in der JSON-Map, Position)
+		var ground = this.map.createStaticLayer('ground', groundtiles, 0, 0);
+		var obstacles = this.map.createStaticLayer('obstacles', obstacletiles, 0, 0);
+		this.walls = this.map.createStaticLayer('walls', wallstileset, 0, 0);
+		var objects = this.map.createStaticLayer('objectlayer', objecttiles, 0, 0);
+
+		//Collision der Layers
+		this.walls.setCollisionByExclusion([-1]);
+		objects.setCollisionByExclusion([-1]);
+	}
+
+	createAnimations() {
 		//Erzeugen der Animation (die nicht funktioniert)
 		this.anims.create({
 			key: 'walk',
@@ -76,10 +88,29 @@ class WorldScene extends Phaser.Scene {
 			repeat: -1
 		});
 
-		//Kollision zwischen Spieler und Wänden (Objekte aktuell deaktiviert)
-		this.physics.add.collider(this.player, walls);
-		//this.physics.add.collider(this.player, objects);
+	}
 
+	createPlayer() {
+		//Erzeugen des Spielers		
+		this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
+		//Erzeugen der Kartengröße und Ränder
+		this.physics.world.bounds.width = this.map.widthInPixels;
+		this.physics.world.bounds.height = this.map.heightInPixels;
+		this.player.setCollideWorldBounds(true);
+
+	}
+
+
+
+	//Erzeugen der Kamera
+	updateCamera() {
+		this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+		this.cameras.main.startFollow(this.player);
+		this.cameras.main.roundPixels = true;
+	}
+
+
+	createStations() {
 		//Erzeugen der Zonen über den Computern
 		this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
 		for (var i = 0; i < 5; i++) {
@@ -94,6 +125,10 @@ class WorldScene extends Phaser.Scene {
 		//Trigger beim Berühren der Zonen
 		this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
 	}
+
+
+
+
 
 	//fortlaufende Aktualisierungen
 	update(time, delta) {
