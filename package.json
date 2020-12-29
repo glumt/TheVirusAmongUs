@@ -25,7 +25,10 @@
   },
   "homepage": "https://github.com/glumt/thevirusamongus#readme",
   "dependencies": {
-    "phaser": "^3.50.1"
+    "cookie-parser": "^1.4.5",
+    "express": "^4.17.1",
+    "phaser": "^3.50.1",
+    "socket.io": "^3.0.4"
   },
   "devDependencies": {
     "webpack": "^5.11.0"
