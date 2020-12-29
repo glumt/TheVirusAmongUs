@@ -18,13 +18,17 @@ const players = {};
 
 io.on('connection', function(socket) {
 	console.log('a user connected: ', socket.id);
+
 	// create a new player and add it to our players object
 	players[socket.id] = {
 		flipX: false,
-		x: Math.floor(Math.random() * 400) + 50,
-		y: Math.floor(Math.random() * 500) + 50,
+		//x: Math.floor(Math.random() * 400) + 50,
+		//y: Math.floor(Math.random() * 500) + 50,
+		x: 50,
+		y: 100,
 		playerId: socket.id
 	};
+
 	// send the players object to the new player
 	socket.emit('currentPlayers', players);
 	// update all other players of the new player

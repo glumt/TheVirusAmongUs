@@ -34,6 +34,7 @@ class WorldScene extends Phaser.Scene {
 	//Elemente die im Spiel erzeugt werden.
 	create() {
 		this.socket = io();
+		this.otherPlayers = this.physics.add.group();
 
 		// create map
 		this.createMap();
@@ -41,20 +42,43 @@ class WorldScene extends Phaser.Scene {
 		// create player animations
 		this.createAnimations();
 
-		// create player
-		this.createPlayer();
-
-		//Kollision zwischen Spieler und Wänden (Objekte aktuell deaktiviert)
-		this.physics.add.collider(this.player, this.walls);
-
-		// update camera
-		this.updateCamera();
-
 		// user input
 		this.cursors = this.input.keyboard.createCursorKeys();
 
 		// create enemies
-		this.createStations();
+		//this.createStations();
+
+		// listen for web socket events
+		this.socket.on('currentPlayers', function(players) {
+			Object.keys(players).forEach(function(id) {
+				if (players[id].playerId === this.socket.id) {
+					this.createPlayer(players[id]);
+				} else {
+					this.addOtherPlayers(players[id]);
+				}
+			}.bind(this));
+		}.bind(this));
+
+		this.socket.on('newPlayer', function(playerInfo) {
+			this.addOtherPlayers(playerInfo);
+		}.bind(this));
+
+		this.socket.on('disconnect', function(playerId) {
+			this.otherPlayers.getChildren().forEach(function(player) {
+				if (playerId === player.playerId) {
+					player.destroy();
+				}
+			}.bind(this));
+		}.bind(this));
+
+		this.socket.on('playerMoved', function(playerInfo) {
+			this.otherPlayers.getChildren().forEach(function(player) {
+				if (playerInfo.playerId === player.playerId) {
+					player.flipX = playerInfo.flipX;
+					player.setPosition(playerInfo.x, playerInfo.y);
+				}
+			}.bind(this));
+		}.bind(this));
 	}
 
 
@@ -77,6 +101,10 @@ class WorldScene extends Phaser.Scene {
 		//Collision der Layers
 		this.walls.setCollisionByExclusion([-1]);
 		objects.setCollisionByExclusion([-1]);
+
+		//Erzeugen der Kartengröße und Ränder
+		this.physics.world.bounds.width = this.map.widthInPixels;
+		this.physics.world.bounds.height = this.map.heightInPixels;
 	}
 
 	createAnimations() {
@@ -90,22 +118,34 @@ class WorldScene extends Phaser.Scene {
 
 	}
 
-	createPlayer() {
-		//Erzeugen des Spielers		
-		this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
-		//Erzeugen der Kartengröße und Ränder
-		this.physics.world.bounds.width = this.map.widthInPixels;
-		this.physics.world.bounds.height = this.map.heightInPixels;
-		this.player.setCollideWorldBounds(true);
+	createPlayer(playerInfo) {
+		this.player = this.add.sprite(0, 0, 'bluespritesheet');
 
+		this.container = this.add.container(playerInfo.x, playerInfo.y);
+		this.container.setSize(32, 32);
+		this.physics.world.enable(this.container);
+		this.container.add(this.player);
+
+		// update camera
+		this.updateCamera();
+
+		this.container.body.setCollideWorldBounds(true);
+
+		//this.physics.add.collider(this.container, this.spawns);
 	}
 
+	addOtherPlayers(playerInfo) {
+		const otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
+		otherPlayer.setTint(Math.random() * 0xffffff);
+		otherPlayer.playerId = playerInfo.playerId;
+		this.otherPlayers.add(otherPlayer);
+	}
 
 
 	//Erzeugen der Kamera
 	updateCamera() {
 		this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
-		this.cameras.main.startFollow(this.player);
+		this.cameras.main.startFollow(this.container);
 		this.cameras.main.roundPixels = true;
 	}
 
@@ -127,31 +167,45 @@ class WorldScene extends Phaser.Scene {
 	}
 
 
-
-
-
 	//fortlaufende Aktualisierungen
-	update(time, delta) {
-		this.player.body.setVelocity(0);
+	update() {
+		if (this.container) {
 
-		// Horizontal movement
-		if (this.cursors.left.isDown) {
-			this.player.body.setVelocityX(-80);
-			//this.player.anims.play('walk', true);
-		}
-		else if (this.cursors.right.isDown) {
-			this.player.body.setVelocityX(80);
-			//this.player.anims.play('walk', true);
-		}
+			this.container.body.setVelocity(0);
 
-		// Vertical movement
-		if (this.cursors.up.isDown) {
-			this.player.body.setVelocityY(-80);
-			//this.player.anims.play('walk', true);
-		}
-		else if (this.cursors.down.isDown) {
-			this.player.body.setVelocityY(80);
-			//this.player.anims.play('walk', true);
+			// Horizontal movement
+			if (this.cursors.left.isDown) {
+				this.container.body.setVelocityX(-80);
+				//this.player.anims.play('walk', true);
+			}
+			else if (this.cursors.right.isDown) {
+				this.container.body.setVelocityX(80);
+				//this.player.anims.play('walk', true);
+			}
+
+			// Vertical movement
+			if (this.cursors.up.isDown) {
+				this.container.body.setVelocityY(-80);
+				//this.player.anims.play('walk', true);
+			}
+			else if (this.cursors.down.isDown) {
+				this.container.body.setVelocityY(80);
+				//this.player.anims.play('walk', true);
+			}
+
+			// emit player movement
+			var x = this.container.x;
+			var y = this.container.y;
+			var flipX = this.player.flipX;
+			if (this.container.oldPosition && (x !== this.container.oldPosition.x || y !== this.container.oldPosition.y || flipX !== this.container.oldPosition.flipX)) {
+				this.socket.emit('playerMovement', { x, y, flipX });
+			}
+			// save old position data
+			this.container.oldPosition = {
+				x: this.container.x,
+				y: this.container.y,
+				flipX: this.player.flipX
+			};
 		}
 	}
 }
