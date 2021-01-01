@@ -131,7 +131,7 @@ class WorldScene extends Phaser.Scene {
 
 		this.container.body.setCollideWorldBounds(true);
 
-		//this.physics.add.collider(this.container, this.spawns);
+		this.physics.add.collider(this.container, this.walls);
 	}
 
 	addOtherPlayers(playerInfo) {
