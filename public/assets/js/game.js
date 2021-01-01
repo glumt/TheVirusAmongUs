@@ -17,12 +17,98 @@ class BootScene extends Phaser.Scene {
 		this.load.image('wallstileset', 'assets/wallstileset.png');
 		this.load.image('objecttiles', 'assets/objecttiles.png');
 		this.load.spritesheet('bluespritesheet', 'assets/bluespritesheet.png', { frameWidth: 32, frameHeight: 32 });
+
+		this.load.image('dragonblue', 'assets/dragonblue.png');
+		this.load.image('dragonred', 'assets/dragonred.png');
+		this.load.image('lobby', 'assets/lobby.png');
 	}
 
 	create() {
-		this.scene.start('WorldScene');
+		this.scene.start('LobbyScene');
 	}
 }
+
+class LobbyScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'LobbyScene'
+		});
+	}
+
+	initialize() {
+		Phaser.Scene.call(this, { key: 'LobbyScene' });
+	}
+
+	create() {
+		// UI Scene at the same time
+		this.scene.launch('LobbyUIScene');
+		this.add.image(100, 100, 'lobby');
+		this.background = this.add.tileSprite(100, 100, 0, 0, 'lobby');
+
+		this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
+		this.player.setCollideWorldBounds(true);
+		this.player.setBounce(1);
+
+		var map = this.make.tilemap({ key: 'map' });
+		this.physics.world.bounds.width = map.widthInPixels -= 470;
+		this.physics.world.bounds.height = map.heightInPixels -= 450;
+		this.player.setCollideWorldBounds(true);
+
+		//Erzeugen der Inputs	
+		this.cursors = this.input.keyboard.createCursorKeys();
+	}
+
+	update(time, delta) {
+
+		if (this.cursors.left.isDown) {
+			this.player.body.setVelocityX(-40);
+			//this.player.anims.play('walk', true);
+		}
+		else if (this.cursors.right.isDown) {
+			this.player.body.setVelocityX(40);
+			//this.player.anims.play('walk', true);
+		}
+
+		// Vertical movement
+		if (this.cursors.up.isDown) {
+			this.player.body.setVelocityY(-40);
+			//this.player.anims.play('walk', true);
+		}
+		else if (this.cursors.down.isDown) {
+			this.player.body.setVelocityY(40);
+			//this.player.anims.play('walk', true);
+		}
+
+		this.timer += delta;
+		while (this.timer > 1000) {
+			this.resources += 1;
+			this.timer -= 1000;
+		}
+		this.background.tilePositionY += 5;
+	}
+}
+
+
+class LobbyUIScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'LobbyUIScene'
+		});
+	}
+
+	create() {
+		this.graphics = this.add.graphics();
+		this.graphics.lineStyle(1, 0xffffff);
+		this.graphics.fillStyle(0x031f4c, 1);
+		this.graphics.strokeRect(2, 185, 318, 100);
+		this.graphics.fillRect(2, 185, 318, 100);
+
+		var text = this.add.text(75, 200, 'Start the Game!');
+		text.setInteractive({ useHandCursor: true });
+		text.on('pointerdown', () => this.scene.start('WorldScene'));
+	}
+}
+
 
 class WorldScene extends Phaser.Scene {
 	constructor() {
@@ -33,6 +119,8 @@ class WorldScene extends Phaser.Scene {
 
 	//Elemente die im Spiel erzeugt werden.
 	create() {
+		this.scene.stop('LobbyScene');
+
 		this.socket = io();
 		this.otherPlayers = this.physics.add.group();
 
@@ -153,17 +241,19 @@ class WorldScene extends Phaser.Scene {
 	createStations() {
 		//Erzeugen der Zonen über den Computern
 		this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		for (var i = 0; i < 5; i++) {
+		//for (var i = 0; i < 5; i++) {
 
-			this.spawns.create(400, 80, 20, 20);
-			this.spawns.create(240, 240, 20, 20);
-			this.spawns.create(80, 80, 20, 20);
-			this.spawns.create(432, 302, 20, 20);
-			this.spawns.create(432, 465, 20, 20);
-			this.spawns.create(240, 430, 20, 20);
-		}
+/*
+		this.spawns.create(400, 80, 20, 20);
+		this.spawns.create(240, 240, 20, 20);
+	//	this.spawns.create(80, 80, 20, 20);
+		this.spawns.create(432, 302, 20, 20);
+		this.spawns.create(432, 465, 20, 20);
+		this.spawns.create(240, 430, 20, 20);
+		*/
+		//}
 		//Trigger beim Berühren der Zonen
-		this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
+		this.physics.add.overlap(this.player, this.spawns, this.onMeetTask, false, this);
 	}
 
 
@@ -208,11 +298,58 @@ class WorldScene extends Phaser.Scene {
 			};
 		}
 	}
+
+	onMeetTask(player, zone) {
+		console.log("player in zone")
+		if (this.cursors.space.isDown) {
+			this.cameras.main.fade(500);
+			this.scene.start('BattleScene');
+		}
+	}
 }
+
+
+class BattleScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'BattleScene'
+		});
+	}
+
+	create() {
+		this.cameras.main.setBackgroundColor('rgba(0, 200, 0, 0.5)');
+		var dragonblue = this.player = this.physics.add.sprite(50, 100, 'dragonblue').setInteractive();
+		this.input.setDraggable(dragonblue);
+		var dragonred = this.physics.add.sprite(200, 200, 'dragonred').setInteractive();
+		this.input.setDraggable(dragonred);
+
+		this.input.dragDistanceThreshold = 16;
+
+		this.input.on('dragstart', function(pointer, gameObject) {
+		});
+
+		this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
+			gameObject.x = dragX;
+			gameObject.y = dragY;
+		});
+
+		this.physics.add.overlap(dragonblue, dragonred, this.endTask, false, this);
+
+		this.input.on('dragend', function(pointer, gameObject) {
+			gameObject.clearTint();
+		});
+	}
+
+	endTask(player, zone) {
+		this.cameras.main.fade(500);
+		this.scene.start('WorldScene');
+	}
+}
+
 
 //Gesamteinstellungen (kein Plan warum am Ende{Hab ich wohl verkackt})
 var config = {
-	type: Phaser.AUTO,
+	type: Phaser.WEBGL,
 	parent: 'content',
 	width: 320,
 	height: 240,
@@ -227,7 +364,10 @@ var config = {
 	},
 	scene: [
 		BootScene,
-		WorldScene
+		LobbyScene,
+		LobbyUIScene,
+		WorldScene,
+		BattleScene
 	]
 };
 
