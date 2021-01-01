@@ -33,13 +33,119 @@ var BootScene = new Phaser.Class({
 	   this.load.image('wallstileset','assets/wallstileset.png');
 	   this.load.image('objecttiles','assets/objecttiles.png');
 	   this.load.spritesheet('bluespritesheet','assets/bluespritesheet.png',{ frameWidth: 32, frameHeight: 32 });
+	   
+	   	   
+	   this.load.image('dragonblue', 'assets/dragonblue.png');
+	   this.load.image('dragonred', 'assets/dragonred.png');
+	   this.load.image('lobby','assets/lobby');
     },
-	//Die World-Szene wird in der Boot-Szene erstellt
+	
     create: function ()
     {
-        this.scene.start('WorldScene');
+        this.scene.start('LobbyScene');
     }
 });
+
+var LobbyScene = new Phaser.Class({
+ 
+    Extends: Phaser.Scene,
+ 
+    initialize:
+ 
+    function LobbyScene ()
+    {
+        Phaser.Scene.call(this, { key: 'LobbyScene' });
+    },
+    create: function ()
+    {
+        // Run UI Scene at the same time
+         this.scene.launch('LobbyUIScene');
+		 this.add.image(100, 100,'lobby');
+		 
+		 this.background = this.add.tileSprite(100,100,0,0,'lobby');
+		 
+		 player = this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
+		 this.player.setCollideWorldBounds(true);
+		 this.player.setBounce(1);
+		
+		
+		
+		var map = this.make.tilemap({ key: 'map' });
+		this.physics.world.bounds.width = map.widthInPixels -= 470;
+        this.physics.world.bounds.height = map.heightInPixels -= 450;
+        this.player.setCollideWorldBounds(true);	
+		
+		//Erzeugen der Inputs	
+		this.cursors = this.input.keyboard.createCursorKeys();
+		
+    },
+	
+	update: function (time,delta)
+	{
+	
+	if (this.cursors.left.isDown)
+        {
+            this.player.body.setVelocityX(-40);
+			//this.player.anims.play('walk', true);
+        }
+        else if (this.cursors.right.isDown)
+        {
+            this.player.body.setVelocityX(40);
+			//this.player.anims.play('walk', true);
+        }
+ 
+        // Vertical movement
+        if (this.cursors.up.isDown)
+        {
+            this.player.body.setVelocityY(-40);
+			//this.player.anims.play('walk', true);
+        }
+        else if (this.cursors.down.isDown)
+        {
+            this.player.body.setVelocityY(40);
+			//this.player.anims.play('walk', true);
+        }  
+		
+	this.timer += delta;
+    while (this.timer > 1000) {
+        this.resources += 1;
+        this.timer -= 1000;
+    }
+		this.background.tilePositionY += 5;
+
+	},
+});
+
+var LobbyUIScene = new Phaser.Class({
+ 
+    Extends: Phaser.Scene,
+ 
+    initialize:
+ 
+    function LobbyUIScene ()
+    {
+        Phaser.Scene.call(this, { key: 'LobbyUIScene' });
+    },
+ 
+    create: function ()
+    {    
+        this.graphics = this.add.graphics();
+        this.graphics.lineStyle(1, 0xffffff);
+        this.graphics.fillStyle(0x031f4c, 1);        
+        this.graphics.strokeRect(2, 185, 318, 100);
+        this.graphics.fillRect(2, 185, 318, 100);
+        
+		 var text = this.add.text(75,200, 'Start the Game!');
+		text.setInteractive({ useHandCursor: true });
+		text.on('pointerdown', () => this.scene.start('WorldScene'));	
+		
+		
+    }
+
+	
+});
+
+
  
 var WorldScene = new Phaser.Class({
  
@@ -50,17 +156,18 @@ var WorldScene = new Phaser.Class({
     function WorldScene ()
     {
         Phaser.Scene.call(this, { key: 'WorldScene' });
+		
     },
 	//In die World-Szene werden keine assets geladen. Die sind schon in der Boot-Szene geladen worden
     preload: function ()
     {
-        
+       
     },
 	
 	//Elemente die im Spiel erzeugt werden.
     create: function ()
     {
-		
+		this.scene.stop('LobbyScene');
 		//Karte wird erstellt
         var map = this.make.tilemap({ key: 'map' });
 		
@@ -118,7 +225,8 @@ var WorldScene = new Phaser.Class({
 			this.spawns.create(240, 430, 20, 20);
         }        
 		//Trigger beim Berühren der Zonen
-        this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
+        this.physics.add.overlap(this.player, this.spawns, this.onMeetTask, false, this);
+		
 		
 		
     },
@@ -156,15 +264,83 @@ var WorldScene = new Phaser.Class({
 		
 	},
 	
-	
-	
-	
+	onMeetTask: function (player, zone) 
+		{
+		if (this.cursors.space.isDown)
+        {
+		this.cameras.main.fade(500);
+		//this.scene.sleep('WorldScene');
+		this.scene.start('BattleScene');
+		}
+		},
 	
 });
+
+
+var BattleScene = new Phaser.Class({
+ 
+    Extends: Phaser.Scene,
+ 
+    initialize:
+ 
+    function BattleScene ()
+	{
+        Phaser.Scene.call(this, { key: 'BattleScene' });
+    },
 	
+	preload: function ()
+	{
+  
+	},
+    create: function ()
+    {
+        this.cameras.main.setBackgroundColor('rgba(0, 200, 0, 0.5)');
+		var dragonblue = this.player = this.physics.add.sprite(50, 100, 'dragonblue').setInteractive();
+		this.input.setDraggable(dragonblue);
+		var dragonred = this.physics.add.sprite(200, 200, 'dragonred').setInteractive();
+		this.input.setDraggable(dragonred);
+
+    
+		this.input.dragDistanceThreshold = 16;
+
+		this.input.on('dragstart', function (pointer, gameObject) {
+
+
+		});
+
+		this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+
+        gameObject.x = dragX;
+        gameObject.y = dragY;
+
+		});
+
+		this.physics.add.overlap(dragonblue, dragonred,this.endTask,false,this);
+
+		this.input.on('dragend', function (pointer, gameObject) {
+
+        gameObject.clearTint();
+
+		});	
+		
+	
+	
+    },
+	
+	endTask: function(player, zone)
+	{
+	  this.cameras.main.fade(500);
+	  this.scene.start('WorldScene');
+	},
+	
+
+});
+	
+	
+
 	//Gesamteinstellungen (kein Plan warum am Ende{Hab ich wohl verkackt})
     var config = {
-    type: Phaser.AUTO,
+    type: Phaser.WEBGL,
 	parent: 'content',
     width: 320,
     height: 240,
@@ -178,89 +354,17 @@ var WorldScene = new Phaser.Class({
         }
 	},
     scene: [
-        BootScene,
-        WorldScene
+		BootScene,
+		LobbyScene,
+		LobbyUIScene,
+        WorldScene,
+		BattleScene
 		]
     };
 	
 var game = new Phaser.Game(config);
+
 	
-	//Einfacherer Aufbau des Spiel in nur einer Szene
-	
-/*
-    function preload ()
-    {
-		this.load.tilemapTiledJSON('map','assets/map.json');
-		//this.load.image('mapboden','assets/mapboden.png');
-		//this.load.image('mapwaende', 'assets/mapwaende.png');
-		this.load.spritesheet('bluespritesheet','assets/bluespritesheet.png',{ frameWidth: 32, frameHeight: 32 });
-		
-    }
-
-    function create ()
-    {
-		//this.add.image(600, 400, 'mapboden');
-		//this.add.image(600, 400, 'mapwaende');
-		
-		var map = this.make.tilemap({key: 'map'});
-		
-		var tiles = map.addTilesetImage('spritesheet', 'tiles');
-        
-		var Boden = map.createStaticLayer('Boden', tiles, 0, 0);
-        var Teile = map.createStaticLayer('Teile', tiles, 0, 0);
-        obstacles.setCollisionByExclusion([-1]);
-
-		
-		player = this.physics.add.sprite(100, 100, 'bluespritesheet',0);
-
-			
-			player.setCollideWorldBounds(true);
-
-			this.anims.create({
-				key: 'left',
-				frames: this.anims.generateFrameNumbers('bluespritesheet', { start: 0, end: 2 }),
-				frameRate: 10,
-				repeat: -1
-			});
-
-			
-			
-			cursors = this.input.keyboard.createCursorKeys();
-		
-	}
-			
-			
-			
-
-    function update () 
-    {
-				 if (cursors.left.isDown) {
-					player.setVelocityX(-200); //go left
-				}
-				else if (cursors.right.isDown) {
-					player.setVelocityX(200); //go right
-				}
-				else {
-						player.setVelocityX(0); //don't move left or right
-				}
-				
-				if (cursors.up.isDown) {
-			player.setVelocityY(-200); //move up
-					}
-				else if (cursors.down.isDown) {
-					player.setVelocityY(200); //move down
-				}
-				else {
-						player.setVelocityY(0); //don't move up or down
-					}
-				
-		this.cameras.main.centerOn(player.x, player.y);
-		
-		
-	}
-    
-	
-*/
 </script>
 
 </body>
