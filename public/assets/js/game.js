@@ -134,7 +134,7 @@ class WorldScene extends Phaser.Scene {
 		this.cursors = this.input.keyboard.createCursorKeys();
 
 		// create enemies
-		//this.createStations();
+		this.createStations();
 
 		// listen for web socket events
 		this.socket.on('currentPlayers', function(players) {
@@ -220,6 +220,8 @@ class WorldScene extends Phaser.Scene {
 		this.container.body.setCollideWorldBounds(true);
 
 		this.physics.add.collider(this.container, this.walls);
+		//Trigger beim Berühren der Zonen
+		this.physics.add.overlap(this.container, this.spawns, this.onMeetTask, false, this);
 	}
 
 	addOtherPlayers(playerInfo) {
@@ -241,19 +243,24 @@ class WorldScene extends Phaser.Scene {
 	createStations() {
 		//Erzeugen der Zonen über den Computern
 		this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		//for (var i = 0; i < 5; i++) {
 
-/*
 		this.spawns.create(400, 80, 20, 20);
 		this.spawns.create(240, 240, 20, 20);
-	//	this.spawns.create(80, 80, 20, 20);
+		this.spawns.create(80, 80, 20, 20);
 		this.spawns.create(432, 302, 20, 20);
 		this.spawns.create(432, 465, 20, 20);
 		this.spawns.create(240, 430, 20, 20);
-		*/
-		//}
-		//Trigger beim Berühren der Zonen
-		this.physics.add.overlap(this.player, this.spawns, this.onMeetTask, false, this);
+	}
+
+	onMeetTask(player, zone) {
+		console.log("ON ZONE")
+		if (this.cursors.space.isDown) {
+			this.cursors.space.reset();
+			//this.cameras.main.fade(500);
+			this.scene.pause();
+			this.scene.launch('BattleScene');
+			console.log("CONTINUE")
+		}
 	}
 
 
@@ -299,13 +306,6 @@ class WorldScene extends Phaser.Scene {
 		}
 	}
 
-	onMeetTask(player, zone) {
-		console.log("player in zone")
-		if (this.cursors.space.isDown) {
-			this.cameras.main.fade(500);
-			this.scene.start('BattleScene');
-		}
-	}
 }
 
 
@@ -341,8 +341,9 @@ class BattleScene extends Phaser.Scene {
 	}
 
 	endTask(player, zone) {
-		this.cameras.main.fade(500);
-		this.scene.start('WorldScene');
+		//this.cameras.main.fade(500);
+		this.scene.stop('BattleScene');
+		this.scene.resume('WorldScene');
 	}
 }
 
