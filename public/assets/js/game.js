@@ -347,8 +347,23 @@ class BattleScene extends Phaser.Scene {
 	}
 }
 
+function loadFile(filePath) {
+  var result = null;
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("GET", filePath, false);
+  xmlhttp.send();
+  if (xmlhttp.status==200) {
+    result = xmlhttp.responseText;
+  }
+  return result;
+}
 
-//Gesamteinstellungen (kein Plan warum am Ende{Hab ich wohl verkackt})
+console.log(loadFile("game.json"))
+
+// Init BattleScenes with data from json
+var testScene = new BattleScene();
+
+
 var config = {
 	type: Phaser.WEBGL,
 	parent: 'content',
@@ -368,8 +383,9 @@ var config = {
 		LobbyScene,
 		LobbyUIScene,
 		WorldScene,
-		BattleScene
+		testScene
 	]
 };
+
 
 var game = new Phaser.Game(config);
