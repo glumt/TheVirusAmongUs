@@ -151,7 +151,7 @@ class WorldScene extends Phaser.Scene {
 			this.addOtherPlayers(playerInfo);
 		}.bind(this));
 
-		this.socket.on('disconnect', function(playerId) {
+		this.socket.on('disconnectPlayer', function(playerId) {
 			this.otherPlayers.getChildren().forEach(function(player) {
 				if (playerId === player.playerId) {
 					player.destroy();
