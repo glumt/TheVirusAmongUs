@@ -253,13 +253,11 @@ class WorldScene extends Phaser.Scene {
 	}
 
 	onMeetTask(player, zone) {
-		console.log("ON ZONE")
 		if (this.cursors.space.isDown) {
 			this.cursors.space.reset();
 			//this.cameras.main.fade(500);
 			this.scene.pause();
 			this.scene.launch('BattleScene');
-			console.log("CONTINUE")
 		}
 	}
 
@@ -310,14 +308,15 @@ class WorldScene extends Phaser.Scene {
 
 
 class BattleScene extends Phaser.Scene {
-	constructor() {
+	constructor(alpha) {
 		super({
 			key: 'BattleScene'
 		});
+		this.alpha = alpha;
 	}
 
 	create() {
-		this.cameras.main.setBackgroundColor('rgba(0, 200, 0, 0.5)');
+		this.cameras.main.setBackgroundColor('rgba(0, 200, 0, ' + this.alpha + ')');
 		var dragonblue = this.player = this.physics.add.sprite(50, 100, 'dragonblue').setInteractive();
 		this.input.setDraggable(dragonblue);
 		var dragonred = this.physics.add.sprite(200, 200, 'dragonred').setInteractive();
@@ -361,7 +360,7 @@ function loadFile(filePath) {
 console.log(loadFile("game.json"))
 
 // Init BattleScenes with data from json
-var testScene = new BattleScene();
+var testScene = new BattleScene("0.5");
 
 
 var config = {
