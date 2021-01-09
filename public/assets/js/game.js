@@ -16,6 +16,11 @@ class BootScene extends Phaser.Scene {
 		this.load.image('teiletiles', 'assets/teiletiles.png');
 		this.load.image('wallstileset', 'assets/wallstileset.png');
 		this.load.image('objecttiles', 'assets/objecttiles.png');
+		this.load.image('begriff1', 'assets/Begriff1.png');
+		this.load.image('begriff2', 'assets/Begriff2.png');
+		this.load.image('begriff3', 'assets/Begriff3.png');
+		
+		
 		this.load.spritesheet('bluespritesheet', 'assets/bluespritesheet.png', { frameWidth: 32, frameHeight: 32 });
 
 		this.load.image('dragonblue', 'assets/dragonblue.png');
@@ -221,7 +226,9 @@ class WorldScene extends Phaser.Scene {
 
 		this.physics.add.collider(this.container, this.walls);
 		//Trigger beim Berühren der Zonen
-		this.physics.add.overlap(this.container, this.spawns, this.onMeetTask, false, this);
+		this.physics.add.overlap(this.container, this.station1, this.onMeetTask1, false, this);
+		this.physics.add.overlap(this.container, this.station2, this.onMeetTask2, false, this);
+		this.physics.add.overlap(this.container, this.station3, this.onMeetTask3, false, this);
 	}
 
 	addOtherPlayers(playerInfo) {
@@ -242,25 +249,52 @@ class WorldScene extends Phaser.Scene {
 
 	createStations() {
 		//Erzeugen der Zonen über den Computern
+		this.station1 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		this.station1.create(400, 80, 20, 20);
+		
+		this.station2 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		this.station2.create(80, 80, 20, 20);
+		
+		this.station3 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		this.station3.create(240, 240, 20, 20);
+	
 		this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-
-		this.spawns.create(400, 80, 20, 20);
-		this.spawns.create(240, 240, 20, 20);
-		this.spawns.create(80, 80, 20, 20);
 		this.spawns.create(432, 302, 20, 20);
 		this.spawns.create(432, 465, 20, 20);
 		this.spawns.create(240, 430, 20, 20);
 	}
 
-	onMeetTask(player, zone) {
+	onMeetTask1(player, zone) {
 		console.log("ON ZONE")
 		if (this.cursors.space.isDown) {
 			this.cursors.space.reset();
 			//this.cameras.main.fade(500);
 			this.scene.pause();
-			this.scene.launch('BattleScene');
+			this.scene.launch('TaskScene1');
 			console.log("CONTINUE")
 		}
+	}
+		
+			onMeetTask2(player, zone) {
+		console.log("ON ZONE")
+		if (this.cursors.space.isDown) {
+			this.cursors.space.reset();
+			//this.cameras.main.fade(500);
+			this.scene.pause();
+			this.scene.launch('TaskScene2');
+			console.log("CONTINUE")
+		}
+	}	
+			onMeetTask3(player, zone) {
+		console.log("ON ZONE")
+		if (this.cursors.space.isDown) {
+			this.cursors.space.reset();
+			//this.cameras.main.fade(500);
+			this.scene.pause();
+			this.scene.launch('TaskScene3');
+			console.log("CONTINUE")
+		}
+		
 	}
 
 
@@ -309,20 +343,27 @@ class WorldScene extends Phaser.Scene {
 }
 
 
-class BattleScene extends Phaser.Scene {
+class TaskScene1 extends Phaser.Scene {
 	constructor() {
 		super({
-			key: 'BattleScene'
+			key: 'TaskScene1'
 		});
 	}
 
 	create() {
 		this.cameras.main.setBackgroundColor('rgba(0, 200, 0, 0.5)');
-		var dragonblue = this.player = this.physics.add.sprite(50, 100, 'dragonblue').setInteractive();
-		this.input.setDraggable(dragonblue);
-		var dragonred = this.physics.add.sprite(200, 200, 'dragonred').setInteractive();
-		this.input.setDraggable(dragonred);
-
+		
+			
+		for(var i = 0; i < 1; i++) {
+		var red1 = this.add.text(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height),'red1').setInteractive();
+		this.input.setDraggable(red1);
+		
+		var blue1 =  this.add.text(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height),'blue1').setInteractive();
+		this.input.setDraggable(blue1);	
+		}
+		
+	
+		
 		this.input.dragDistanceThreshold = 16;
 
 		this.input.on('dragstart', function(pointer, gameObject) {
@@ -333,7 +374,7 @@ class BattleScene extends Phaser.Scene {
 			gameObject.y = dragY;
 		});
 
-		this.physics.add.overlap(dragonblue, dragonred, this.endTask, false, this);
+		this.physics.add.overlap(red1, blue1, this.endTask, false, this);
 
 		this.input.on('dragend', function(pointer, gameObject) {
 			gameObject.clearTint();
@@ -342,10 +383,272 @@ class BattleScene extends Phaser.Scene {
 
 	endTask(player, zone) {
 		//this.cameras.main.fade(500);
-		this.scene.stop('BattleScene');
+		this.scene.stop('TaskScene1');
 		this.scene.resume('WorldScene');
 	}
 }
+
+class TaskScene2 extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'TaskScene2'
+		});
+	}
+
+	create() {
+		
+		this.cameras.main.setBackgroundColor('rgba(245, 66, 66)');
+		
+		/*this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+        for(var i = 0; i < 10; i++) {
+        var x = Phaser.Math.RND.between(0, this.physics.world.bounds.width);
+        var y = Phaser.Math.RND.between(0, this.physics.world.bounds.height);
+            // parameters are x, y, width, height
+        this.spawns.create(x, y, 20, 20);     
+		
+		}        
+        this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
+		
+		*/
+		this.graphics = this.add.graphics();
+		this.graphics.lineStyle(1, 0xffffff);
+		this.graphics.fillStyle(0x031f4c, 1);
+		this.graphics.strokeRect(0, 0, this.physics.world.bounds.width/2, this.physics.world.bounds.height);
+		this.graphics.fillRect(0, 0, this.physics.world.bounds.width/2, this.physics.world.bounds.height);
+			
+		
+		this.blueField = this.physics.add.group({ classType: Phaser.GameObjects.Zone });		
+		this.blueField.create(0,0,320,477);
+		
+		this.redField = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		this.redField.create(320,0,320,477);
+		
+		
+		for(var i = 0; i < 1; i++) {
+		var dragonblue = this.player = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'dragonblue').setInteractive();
+		this.input.setDraggable(dragonblue);
+		var dragonred = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'dragonred').setInteractive();
+		this.input.setDraggable(dragonred);
+		}
+ 
+		this.input.dragDistanceThreshold = 16;
+
+		this.input.on('dragstart', function(pointer, gameObject) {
+		});
+
+		this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
+			gameObject.x = dragX;
+			gameObject.y = dragY;
+		});
+
+		this.Switch1 = false;
+		this.Switch2 = false;
+		
+		this.physics.add.overlap(dragonblue, this.redField, this.FalseSwitch1, false, this);
+		this.physics.add.overlap(dragonblue, this.blueField, this.TrueSwitch1, false, this);
+		this.physics.add.overlap(dragonblue, this.blueField, this.endTask, false, this);
+		this.physics.add.overlap(dragonblue, this.blueField, console.log('blueTouch'), false, this);
+		this.physics.add.overlap(dragonblue, this.blueField, this.TrueSwitch2, false, this);
+		this.physics.add.overlap(dragonred, this.blueField, this.False2, false, this);
+		this.physics.add.overlap(dragonred, this.redField, this.endTask, false, this);
+		this.physics.add.overlap(dragonred, this.redField, console.log('redTouch'), false, this);
+		
+		this.input.on('dragend', function(pointer, gameObject) {
+			gameObject.clearTint();
+		});
+	}
+	
+	FalseSwitch1(player, zone, Switch1, Switch2) {
+		
+		console.log('blueFunction');
+		this.Switch1 = false;		
+	}	
+	
+	TrueSwitch1(player, zone, Switch1, Switch2) {
+		
+		console.log('blueFunction');
+		this.Switch1 = true;		
+	}	
+	
+	FalseSwitch2(player, zone, Switch1, Switch2) {
+		
+		console.log('redFunction');
+		this.Switch2 = false;
+	}
+	
+	TrueSwitch2(player, zone, Switch1, Switch2) {
+		
+		console.log('redFunction');
+		this.Switch2 = true;
+	}
+	
+			
+	endTask(player, zone, redSwitch, blueSwitch) {
+		//this.cameras.main.fade(500);
+		console.log('EndFunction');
+		if (this.Switch2 == true && this.Switch1 == true) {
+		
+		this.scene.stop('TaskScene2');
+		this.scene.resume('WorldScene');
+		}
+	}	
+	
+
+
+		
+	}
+	
+	
+	class TaskScene3 extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'TaskScene3'
+		});
+	}
+
+	create() {
+		
+		this.cameras.main.setBackgroundColor('rgba(240, 240, 240)');
+		
+		/*this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+        for(var i = 0; i < 10; i++) {
+        var x = Phaser.Math.RND.between(0, this.physics.world.bounds.width);
+        var y = Phaser.Math.RND.between(0, this.physics.world.bounds.height);
+            // parameters are x, y, width, height
+        this.spawns.create(x, y, 20, 20);     
+		
+		}        
+        this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
+		
+		*/
+		this.graphics = this.add.graphics();
+		this.graphics.lineStyle(1, 240, 240, 240);
+		this.graphics.fillStyle(0x031f4c, 1);
+		this.graphics.strokeRect(50, 100, 50, 50);
+		this.graphics.fillRect(50, 100, 50, 50);
+		
+		this.graphics = this.add.graphics();
+		this.graphics.lineStyle(1, 0x031f4c);
+		this.graphics.fillStyle(0x031f4c, 1);
+		this.graphics.strokeRect(150, 100, 50, 50);
+		this.graphics.fillRect(150, 100, 50, 50);
+		
+		this.graphics = this.add.graphics();
+		this.graphics.lineStyle(1, 0x031f4c);
+		this.graphics.fillStyle(0x031f4c, 1);
+		this.graphics.strokeRect(250, 100, 50, 50);
+		this.graphics.fillRect(250, 100, 50, 50);
+		
+	
+			
+		this.falseField = this.physics.add.group({ classType: Phaser.GameObjects.Zone });		
+		this.falseField.create(0, 0, 700, 400);
+		
+		this.Field1 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });		
+		this.Field1.create(75, 125, 50, 50);
+		
+		this.Field2 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });		
+		this.Field2.create(175, 125, 50, 50);
+		
+		this.Field3 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });		
+		this.Field3.create(275, 125, 50, 50);
+		
+		
+		for(var i = 0; i < 1; i++) {
+		var begriff1 = this.player = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff1').setInteractive();
+		this.input.setDraggable(begriff1);
+		var begriff2 = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff2').setInteractive();
+		this.input.setDraggable(begriff2);
+		var begriff3 = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff3').setInteractive();
+		this.input.setDraggable(begriff3);
+		}
+ 
+		this.input.dragDistanceThreshold = 16;
+
+		this.input.on('dragstart', function(pointer, gameObject) {
+		});
+
+		this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
+			gameObject.x = dragX;
+			gameObject.y = dragY;
+		});
+
+		this.Switch1 = false;
+		this.Switch2 = false;
+		this.Switch3 = false;
+		
+		
+		this.physics.add.overlap(begriff1, this.Field1, this.TrueSwitch1, false, this);
+		this.physics.add.overlap(begriff1, this.Field1, this.endTask, false, this);
+		this.physics.add.overlap(begriff2, this.Field2, this.TrueSwitch2, false, this);
+		this.physics.add.overlap(begriff2, this.Field2, this.endTask, false, this);
+		this.physics.add.overlap(begriff3, this.Field3, this.TrueSwitch3, false, this);
+		this.physics.add.overlap(begriff3, this.Field3, this.endTask, false, this);
+		//this.physics.add.overlap(begriff1, this.falseField, this.FalseSwitch1, false, this);
+		//this.physics.add.overlap(begriff2, this.falseField, this.FalseSwitch2, false, this);
+		//this.physics.add.overlap(begriff3, this.falseField, this.FalseSwitch3, false, this);
+		
+		this.input.on('dragend', function(pointer, gameObject) {
+			gameObject.clearTint();
+		});
+	}
+		
+	
+	/*FalseSwitch1(player, zone, Switch1, Switch2) {
+		
+		console.log('FalseSwitch1');
+		this.Switch1 = false;		
+	}	
+	
+	FalseSwitch2(player, zone, Switch1, Switch2) {
+		
+		console.log('FalseSwitch2');
+		this.Switch2 = false;
+	}
+	
+	FalseSwitch3(player, zone, Switch1, Switch2) {
+		
+		console.log('FalseSwitch3');
+		this.Switch2 = false;
+	}
+
+	*/
+	TrueSwitch1(player, zone, Switch1, Switch2, Switch3) {
+		
+		console.log('TrueSwitch1');
+		this.Switch1 = true;		
+	}	
+	
+	TrueSwitch2(player, zone, Switch1, Switch2, Switch3) {
+		
+		console.log('TrueSwitch2');
+		this.Switch2 = true;
+	}
+	
+	TrueSwitch3(player, zone, Switch1, Switch2, Switch3) {
+		
+		console.log('TrueSwitch3');
+		this.Switch3 = true;
+	}
+	
+			
+	endTask(player, zone, Switch1, Switch2, Switch3) {
+		
+		
+		if (this.Switch1 == true && this.Switch2 == true && this.Switch3 == true) {
+		 console.log('allTrue');
+		this.scene.stop('TaskScene3');
+		this.scene.resume('WorldScene');
+		}
+		
+	}	
+	
+
+
+		
+	}
+	
+
 
 
 //Gesamteinstellungen (kein Plan warum am Ende{Hab ich wohl verkackt})
@@ -368,7 +671,9 @@ var config = {
 		LobbyScene,
 		LobbyUIScene,
 		WorldScene,
-		BattleScene
+		TaskScene1,
+		TaskScene2,
+		TaskScene3,
 	]
 };
 
