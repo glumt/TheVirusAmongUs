@@ -17,9 +17,23 @@ const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
 const players = {};
+var noReadyPlayers = 0;
 
 io.on('connection', function(socket) {
 	console.log('a user connected: ', socket.id);
+
+	socket.on('playerReady', function() {
+		noReadyPlayers += 1;
+
+		if (noReadyPlayers == Object.keys(players).length) {
+			// send to all clients
+			io.emit('startGame', socket.id);
+		}
+	});
+
+	socket.on('resetScene', function() {
+		socket.emit('currentPlayers', players);
+	});
 
 	// create a new player and add it to our players object
 	players[socket.id] = {
@@ -33,12 +47,14 @@ io.on('connection', function(socket) {
 
 	// send the players object to the new player
 	socket.emit('currentPlayers', players);
+
 	// update all other players of the new player
 	socket.broadcast.emit('newPlayer', players[socket.id]);
 
 	// when a player disconnects, remove them from our players object
 	socket.on('disconnect', function() {
 		console.log('user disconnected: ', socket.id);
+		noReadyPlayers -= 1;
 		delete players[socket.id];
 		// emit a message to all players to remove this player
 		io.emit('disconnectPlayer', socket.id);

@@ -28,115 +28,29 @@ class BootScene extends Phaser.Scene {
 	}
 }
 
-class LobbyScene extends Phaser.Scene {
-	constructor() {
+class MultiplayerScene extends Phaser.Scene {
+	constructor(data) {
 		super({
-			key: 'LobbyScene'
+			key: data.sceneName
 		});
 	}
 
-	initialize() {
-		Phaser.Scene.call(this, { key: 'LobbyScene' });
+	init() {
+		this.SocketfromInit = false;
 	}
 
-	create() {
-		// UI Scene at the same time
-		this.scene.launch('LobbyUIScene');
-		this.add.image(100, 100, 'lobby');
-		this.background = this.add.tileSprite(100, 100, 0, 0, 'lobby');
+	// Partial class which not works on its own
+	createMultiplayerIO() {
 
-		this.player = this.physics.add.sprite(50, 100, 'bluespritesheet');
-		this.player.setCollideWorldBounds(true);
-		this.player.setBounce(1);
-
-		var map = this.make.tilemap({ key: 'map' });
-		this.physics.world.bounds.width = map.widthInPixels -= 470;
-		this.physics.world.bounds.height = map.heightInPixels -= 450;
-		this.player.setCollideWorldBounds(true);
-
-		//Erzeugen der Inputs	
-		this.cursors = this.input.keyboard.createCursorKeys();
-	}
-
-	update(time, delta) {
-
-		if (this.cursors.left.isDown) {
-			this.player.body.setVelocityX(-40);
-			//this.player.anims.play('walk', true);
-		}
-		else if (this.cursors.right.isDown) {
-			this.player.body.setVelocityX(40);
-			//this.player.anims.play('walk', true);
-		}
-
-		// Vertical movement
-		if (this.cursors.up.isDown) {
-			this.player.body.setVelocityY(-40);
-			//this.player.anims.play('walk', true);
-		}
-		else if (this.cursors.down.isDown) {
-			this.player.body.setVelocityY(40);
-			//this.player.anims.play('walk', true);
-		}
-
-		this.timer += delta;
-		while (this.timer > 1000) {
-			this.resources += 1;
-			this.timer -= 1000;
-		}
-		this.background.tilePositionY += 5;
-	}
-}
-
-
-class LobbyUIScene extends Phaser.Scene {
-	constructor() {
-		super({
-			key: 'LobbyUIScene'
-		});
-	}
-
-	create() {
-		this.graphics = this.add.graphics();
-		this.graphics.lineStyle(1, 0xffffff);
-		this.graphics.fillStyle(0x031f4c, 1);
-		this.graphics.strokeRect(2, 185, 318, 100);
-		this.graphics.fillRect(2, 185, 318, 100);
-
-		var text = this.add.text(75, 200, 'Start the Game!');
-		text.setInteractive({ useHandCursor: true });
-		text.on('pointerdown', () => this.scene.start('WorldScene'));
-	}
-}
-
-
-class WorldScene extends Phaser.Scene {
-	constructor() {
-		super({
-			key: 'WorldScene'
-		});
-	}
-
-	//Elemente die im Spiel erzeugt werden.
-	create() {
-		this.scene.stop('LobbyScene');
-
-		this.socket = io();
 		this.otherPlayers = this.physics.add.group();
 
-		// create map
-		this.createMap();
+		if (this.SocketfromInit) {
+			this.socket = this.initSocket;
+			this.socket.emit('resetScene');
+		} else {
+			this.socket = io();
+		}
 
-		// create player animations
-		this.createAnimations();
-
-		// user input
-		this.cursors = this.input.keyboard.createCursorKeys();
-
-		// create enemies
-		this.createStations();
-
-		// listen for web socket events
 		this.socket.on('currentPlayers', function(players) {
 			Object.keys(players).forEach(function(id) {
 				if (players[id].playerId === this.socket.id) {
@@ -167,6 +81,154 @@ class WorldScene extends Phaser.Scene {
 				}
 			}.bind(this));
 		}.bind(this));
+
+		this.socket.on('startGame', function(playerInfo) {
+			this.scene.start('WorldScene', { socket: this.socket })
+		}.bind(this));
+	}
+
+	addOtherPlayers(playerInfo) {
+		const otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
+		otherPlayer.setTint(Math.random() * 0xffffff);
+		otherPlayer.playerId = playerInfo.playerId;
+		this.otherPlayers.add(otherPlayer);
+	}
+
+	emitPlayerMovement() {
+		var x = this.container.x;
+		var y = this.container.y;
+		var flipX = this.player.flipX;
+		if (this.container.oldPosition && (x !== this.container.oldPosition.x || y !== this.container.oldPosition.y || flipX !== this.container.oldPosition.flipX)) {
+			this.socket.emit('playerMovement', { x, y, flipX });
+		}
+		// save old position data
+		this.container.oldPosition = {
+			x: this.container.x,
+			y: this.container.y,
+			flipX: this.player.flipX
+		};
+	}
+}
+
+class LobbyScene extends MultiplayerScene {
+	constructor() {
+		super({
+			sceneName: 'LobbyScene'
+		});
+	}
+
+	create() {
+		this.createLobbyMap();
+
+		this.cursors = this.input.keyboard.createCursorKeys();
+
+		// UI (Start Button)
+		this.graphics = this.add.graphics();
+		this.graphics.lineStyle(1, 0xffffff);
+		this.graphics.fillStyle(0x031f4c, 1);
+		this.graphics.strokeRect(2, 185, 318, 100);
+		this.graphics.fillRect(2, 185, 318, 100);
+
+		this.startText = this.add.text(75, 200, 'Start the Game!');
+		this.startText.setInteractive({ useHandCursor: true });
+		this.startText.on('pointerdown', () => this.emitReady());
+
+		this.createMultiplayerIO();
+	}
+
+	emitReady() {
+		this.socket.emit('playerReady');
+		this.startText.setText("Waiting...");
+	}
+
+	createLobbyMap() {
+		this.add.image(100, 100, 'lobby');
+		this.background = this.add.tileSprite(100, 100, 0, 0, 'lobby');
+
+		this.map = this.make.tilemap({ key: 'map' });
+		this.physics.world.bounds.width = this.map.widthInPixels -= 470;
+		this.physics.world.bounds.height = this.map.heightInPixels -= 450;
+	}
+
+	createPlayer(playerInfo) {
+		this.player = this.add.sprite(0, 0, 'bluespritesheet');
+
+		this.container = this.add.container(50, 100)
+		this.container.setSize(32, 32);
+		this.physics.world.enable(this.container);
+		this.container.add(this.player);
+
+		this.container.body.setBounce(1);
+		this.container.body.setCollideWorldBounds(true);
+	}
+
+
+	update(time, delta) {
+		if (this.container) {
+			if (this.cursors.left.isDown) {
+				this.container.body.setVelocityX(-40);
+				//this.player.anims.play('walk', true);
+			}
+			else if (this.cursors.right.isDown) {
+				this.container.body.setVelocityX(40);
+				//this.player.anims.play('walk', true);
+			}
+
+			// Vertical movement
+			if (this.cursors.up.isDown) {
+				this.container.body.setVelocityY(-40);
+				//this.player.anims.play('walk', true);
+			}
+			else if (this.cursors.down.isDown) {
+				this.container.body.setVelocityY(40);
+				//this.player.anims.play('walk', true);
+			}
+
+			this.timer += delta;
+			while (this.timer > 1000) {
+				this.resources += 1;
+				this.timer -= 1000;
+			}
+			this.background.tilePositionY += 5;
+
+			// emit player movement
+			this.emitPlayerMovement()
+		}
+	}
+
+}
+
+
+class WorldScene extends MultiplayerScene {
+	constructor() {
+		super({
+			sceneName: 'WorldScene'
+		});
+	}
+
+	init(data) {
+		this.SocketfromInit = true;
+		this.initSocket = data.socket;
+	}
+
+	//Elemente die im Spiel erzeugt werden.
+	create() {
+		this.scene.stop('LobbyScene');
+
+		// create map
+		this.createMap();
+
+		// create player animations
+		this.createAnimations();
+
+		// user input
+		this.cursors = this.input.keyboard.createCursorKeys();
+
+		// create enemies
+		this.createStations();
+
+		// listen for web socket events
+		this.createMultiplayerIO();
 	}
 
 
@@ -211,8 +273,8 @@ class WorldScene extends Phaser.Scene {
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(32, 32);
-		this.physics.world.enable(this.container);
 		this.container.add(this.player);
+		//this.physics.world.enable(this.container);
 
 		// update camera
 		this.updateCamera();
@@ -265,7 +327,6 @@ class WorldScene extends Phaser.Scene {
 	//fortlaufende Aktualisierungen
 	update() {
 		if (this.container) {
-
 			this.container.body.setVelocity(0);
 
 			// Horizontal movement
@@ -289,24 +350,13 @@ class WorldScene extends Phaser.Scene {
 			}
 
 			// emit player movement
-			var x = this.container.x;
-			var y = this.container.y;
-			var flipX = this.player.flipX;
-			if (this.container.oldPosition && (x !== this.container.oldPosition.x || y !== this.container.oldPosition.y || flipX !== this.container.oldPosition.flipX)) {
-				this.socket.emit('playerMovement', { x, y, flipX });
-			}
-			// save old position data
-			this.container.oldPosition = {
-				x: this.container.x,
-				y: this.container.y,
-				flipX: this.player.flipX
-			};
+			this.emitPlayerMovement()
 		}
 	}
-
 }
 
 
+// BattleScene run only on client side
 class BattleScene extends Phaser.Scene {
 	constructor(alpha) {
 		super({
@@ -346,23 +396,24 @@ class BattleScene extends Phaser.Scene {
 	}
 }
 
+
+// load game configuration file from server
 function loadFile(filePath) {
-  var result = null;
-  var xmlhttp = new XMLHttpRequest();
-  xmlhttp.open("GET", filePath, false);
-  xmlhttp.send();
-  if (xmlhttp.status==200) {
-    result = xmlhttp.responseText;
-  }
-  return result;
+	var result = null;
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("GET", filePath, false);
+	xmlhttp.send();
+	if (xmlhttp.status == 200) {
+		result = xmlhttp.responseText;
+	}
+	return result;
 }
 
-console.log(loadFile("game.json"))
-
 // Init BattleScenes with data from json
+//console.log(loadFile("game.json"))
 var testScene = new BattleScene("0.5");
 
-
+// assemble game configuration
 var config = {
 	type: Phaser.WEBGL,
 	parent: 'content',
@@ -380,11 +431,9 @@ var config = {
 	scene: [
 		BootScene,
 		LobbyScene,
-		LobbyUIScene,
 		WorldScene,
 		testScene
 	]
 };
-
 
 var game = new Phaser.Game(config);
