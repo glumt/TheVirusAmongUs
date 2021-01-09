@@ -1,0 +1,8 @@
+{
+    "task1": {
+        "taskType": "pairs",
+        "question": "Welche Woerter sind verwandt?",
+        "part1": ["baden", "bergen", "windig", "wirksam", "schreiben"],
+        "part2": ["Bad", "Berg", "Wind", "Wirkung", "Schreibschrift"]
+    }
+}
