@@ -382,7 +382,6 @@ class TaskScene1 extends Phaser.Scene {
 			this.containers1.add(this.container1);
 
 			// part 2
-
 			this.pairs2 = this.add.text(0, 0, this.gameData.part2[i])
 			this.pairs2.setOrigin(0.5);
 
@@ -410,7 +409,6 @@ class TaskScene1 extends Phaser.Scene {
 		for (var i = 0; i < cons1.length; i++) {
 			var c1 = cons1[i];
 			var c2 = cons2[i];
-			console.log(c1, c2)
 
 			if (checkOverlap(c1, c2)) {
 				this.pairsOverlapping[i] = true;
@@ -430,14 +428,11 @@ class TaskScene1 extends Phaser.Scene {
 			gameObject.y = dragY;
 		});
 
-		//this.physics.add.overlap(red1, blue1, this.endTask, false, this);
-
 		this.input.on('dragend', function(pointer, gameObject) {
 		});
 	}
 
 	update(time, delta) {
-		console.log(this.noOverlap, this.pairsOverlapping)
 		var cons1 = this.containers1.getChildren();
 		var cons2 = this.containers2.getChildren();
 
@@ -468,7 +463,6 @@ class TaskScene1 extends Phaser.Scene {
 	}
 
 	endTask() {
-		console.log(this.noOverlap)
 		if (this.noOverlap == this.noPairs) {
 			this.scene.stop('TaskScene1');
 			this.scene.resume('WorldScene');
