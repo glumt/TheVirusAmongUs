@@ -29,20 +29,21 @@ class BootScene extends Phaser.Scene {
 }
 
 class MultiplayerScene extends Phaser.Scene {
-	constructor(data) {
-		super({
-			key: data.sceneName
-		});
+	constructor(sceneName) {
+		super(sceneName);
 	}
 
-	init() {
-		this.SocketfromInit = false;
-	}
+	/*
+		init() {
+			this.SocketfromInit = false;
+		}
+		*/
 
 	// Partial class which not works on its own
 	createMultiplayerIO() {
 
 		this.otherPlayers = this.physics.add.group();
+		/*
 
 		if (this.SocketfromInit) {
 			this.socket = this.initSocket;
@@ -50,8 +51,11 @@ class MultiplayerScene extends Phaser.Scene {
 		} else {
 			this.socket = io();
 		}
+		*/
 
 		this.socket.on('currentPlayers', function(players) {
+			this.createAllPlayers(players);
+			/*
 			Object.keys(players).forEach(function(id) {
 				if (players[id].playerId === this.socket.id) {
 					this.createPlayer(players[id]);
@@ -59,6 +63,7 @@ class MultiplayerScene extends Phaser.Scene {
 					this.addOtherPlayers(players[id]);
 				}
 			}.bind(this));
+			*/
 		}.bind(this));
 
 		this.socket.on('newPlayer', function(playerInfo) {
@@ -66,6 +71,10 @@ class MultiplayerScene extends Phaser.Scene {
 		}.bind(this));
 
 		this.socket.on('disconnectPlayer', function(playerId) {
+			if (!this.sys.isActive()) {
+				return
+			}
+
 			this.otherPlayers.getChildren().forEach(function(player) {
 				if (playerId === player.playerId) {
 					player.destroy();
@@ -74,6 +83,10 @@ class MultiplayerScene extends Phaser.Scene {
 		}.bind(this));
 
 		this.socket.on('playerMoved', function(playerInfo) {
+			if (!this.sys.isActive()) {
+				return
+			}
+
 			this.otherPlayers.getChildren().forEach(function(player) {
 				if (playerInfo.playerId === player.playerId) {
 					player.flipX = playerInfo.flipX;
@@ -83,12 +96,34 @@ class MultiplayerScene extends Phaser.Scene {
 		}.bind(this));
 
 		this.socket.on('startGame', function(playerInfo) {
-			this.scene.start('WorldScene', { socket: this.socket })
+			this.scene.stop('LobbyScene');
+			this.scene.start('WorldScene', { socket: this.socket, players: playerInfo})
 		}.bind(this));
+	}
+	
+
+	createAllPlayers(players) {
+		/*
+		Object.keys(players).forEach(function(id) {
+			console.log(players[id].playerId, this.socket.id)
+			if (players[id].playerId == this.socket.id) {
+				this.createPlayer(players[id]);
+			} else {
+				this.addOtherPlayers(players[id]);
+			}
+		}.bind(this));
+		*/
+		Object.keys(players).forEach((id) => {
+			if (players[id].playerId == this.socket.id) {
+				this.createPlayer(players[id]);
+			} else {
+				this.addOtherPlayers(players[id]);
+			}
+		});
 	}
 
 	addOtherPlayers(playerInfo) {
-		const otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
+		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
 		otherPlayer.setTint(Math.random() * 0xffffff);
 		otherPlayer.playerId = playerInfo.playerId;
 		this.otherPlayers.add(otherPlayer);
@@ -112,9 +147,11 @@ class MultiplayerScene extends Phaser.Scene {
 
 class LobbyScene extends MultiplayerScene {
 	constructor() {
-		super({
-			sceneName: 'LobbyScene'
-		});
+		super('LobbyScene');
+	}
+
+	init() {
+		this.socket = io();
 	}
 
 	create() {
@@ -201,19 +238,27 @@ class LobbyScene extends MultiplayerScene {
 
 class WorldScene extends MultiplayerScene {
 	constructor() {
-		super({
-			sceneName: 'WorldScene'
-		});
+		super('WorldScene');
 	}
 
 	init(data) {
-		this.SocketfromInit = true;
-		this.initSocket = data.socket;
+		this.socket = data.socket;
+
+		this.initPlayers = this.initStartPosition( data.players);
+		this.isInBattle = false;
+	}
+	
+	
+	initStartPosition(players) {
+		Object.keys(players).forEach((id) => {
+			players[id].x = 50;
+			players[id].y = 100;
+		});
+		return players
 	}
 
 	//Elemente die im Spiel erzeugt werden.
 	create() {
-		this.scene.stop('LobbyScene');
 
 		// create map
 		this.createMap();
@@ -229,6 +274,8 @@ class WorldScene extends MultiplayerScene {
 
 		// listen for web socket events
 		this.createMultiplayerIO();
+
+		this.createAllPlayers(this.initPlayers);
 	}
 
 
@@ -274,7 +321,7 @@ class WorldScene extends MultiplayerScene {
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(32, 32);
 		this.container.add(this.player);
-		//this.physics.world.enable(this.container);
+		this.physics.world.enable(this.container);
 
 		// update camera
 		this.updateCamera();
@@ -286,12 +333,14 @@ class WorldScene extends MultiplayerScene {
 		this.physics.add.overlap(this.container, this.spawns, this.onMeetTask, false, this);
 	}
 
+	/*
 	addOtherPlayers(playerInfo) {
 		const otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
 		otherPlayer.setTint(Math.random() * 0xffffff);
 		otherPlayer.playerId = playerInfo.playerId;
 		this.otherPlayers.add(otherPlayer);
 	}
+	*/
 
 
 	//Erzeugen der Kamera
@@ -318,7 +367,7 @@ class WorldScene extends MultiplayerScene {
 		if (this.cursors.space.isDown) {
 			this.cursors.space.reset();
 			//this.cameras.main.fade(500);
-			this.scene.pause();
+			//this.scene.pause();
 			this.scene.launch('BattleScene');
 		}
 	}
@@ -328,6 +377,10 @@ class WorldScene extends MultiplayerScene {
 	update() {
 		if (this.container) {
 			this.container.body.setVelocity(0);
+
+			if (this.scene.isActive('BattleScene')) {
+				return
+			}
 
 			// Horizontal movement
 			if (this.cursors.left.isDown) {
