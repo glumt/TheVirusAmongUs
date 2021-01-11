@@ -22,19 +22,6 @@ var noReadyPlayers = 0;
 io.on('connection', function(socket) {
 	console.log('a user connected: ', socket.id);
 
-	socket.on('playerReady', function() {
-		noReadyPlayers += 1;
-
-		if (noReadyPlayers == Object.keys(players).length) {
-			// send to all clients
-			io.emit('startGame', socket.id);
-		}
-	});
-
-	socket.on('resetScene', function() {
-		socket.emit('currentPlayers', players);
-	});
-
 	// create a new player and add it to our players object
 	players[socket.id] = {
 		flipX: false,
@@ -50,6 +37,20 @@ io.on('connection', function(socket) {
 
 	// update all other players of the new player
 	socket.broadcast.emit('newPlayer', players[socket.id]);
+
+	// Check if all players are ready to play
+	socket.on('playerReady', function() {
+		noReadyPlayers += 1;
+
+		if (noReadyPlayers == Object.keys(players).length) {
+			// send to all clients
+			io.emit('startGame', players);
+		}
+	});
+
+	socket.on('resetScene', function() {
+		socket.emit('currentPlayers', players);
+	});
 
 	// when a player disconnects, remove them from our players object
 	socket.on('disconnect', function() {
