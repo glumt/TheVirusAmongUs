@@ -4,5 +4,56 @@
         "question": "Welche Woerter sind verwandt?",
         "part1": ["baden", "bergen", "windig", "wirksam", "schreiben"],
         "part2": ["Bad", "Berg", "Wind", "Wirkung", "Schreibschrift"]
+    },
+    "task2": {
+        "taskType": "group",
+        "question": "Sortiere!",
+        "group1": "Nomen",
+        "items1": ["APFEL", "BAUM", "STRAND", "MANN", "LIEBE"],
+        "group2": "Verben",
+        "items2": ["Springen", "Singen", "Tanzen", "Lachen", "Klatschen"]
+    },
+    "task3": {
+        "taskType": "order",
+        "question": "Alphabetische Reihenfolge",
+        "items": ["Aachen", "Amsterdam", "Amsel", "Amerika", "Alter"]
+    },
+    "task4": {
+        "taskType": "pairs",
+        "question": "Was war wann?",
+        "part1": ["Roms Gründung", "Rom hat die stärkste Arme", "Varusschlacht", "Größte Ausdehnung", "Attila greift an"],
+        "part2": ["754 v.Chr.", "200 v.Chr.", "9 v.Chr.", "116 v.Chr.", "450 v.Chr."]
+    },
+    "task5": {
+        "taskType": "group",
+        "question": "Sortiere!",
+        "group1": "Römer",
+        "items1": ["Pilum", "Tunika", "Caliga", "Katapult", "Phalanx"],
+        "group2": "Germanen",
+        "items2": ["Speer", "ovales Schild", "Lederrüstung", "Wurfaxt", "Horde"]
+    },
+    "task6": {
+        "taskType": "order",
+        "question": "Reihenfolge römischer Herrscher",
+        "items": ["Ceaser", "Augustus", "Nero", "Titus", "Konstantin"]
+    },
+    "task7": {
+        "taskType": "pairs",
+        "question": "Rechne!",
+        "part1": ["34+29", "27-9", "33*3", "50/2", "17+17"],
+        "part2": ["63", "16", "99", "25", "34"]
+    },
+    "task8": {
+        "taskType": "group",
+        "question": "Sortiere!",
+        "group1": "Gerade",
+        "items1": [2, 66, 32, 50, 72],
+        "group2": "Ungerade",
+        "items2": [3, 21, 33, 99, 733, 21, 33, 99, 73]
+    },
+    "task9": {
+        "taskType": "order",
+        "question": "Aufsteigend!",
+        "items": ["1", "1,01", "1,11", "1,2", "2,1"]
     }
 }
