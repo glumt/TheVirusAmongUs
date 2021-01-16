@@ -226,9 +226,9 @@ class WorldScene extends Phaser.Scene {
 
 		this.physics.add.collider(this.container, this.walls);
 		//Trigger beim Berühren der Zonen
-		this.physics.add.overlap(this.container, this.station2, this.onMeetTask2, false, this);
+		this.physics.add.overlap(this.container, this.station2, this.onMeetTask3, false, this);
 		this.physics.add.overlap(this.container, this.station1, this.onMeetTask1, false, this);
-		this.physics.add.overlap(this.container, this.station3, this.onMeetTask3, false, this);
+		this.physics.add.overlap(this.container, this.station3, this.onMeetTask2, false, this);
 	}
 
 	addOtherPlayers(playerInfo) {
@@ -671,27 +671,18 @@ class TaskScene2 extends Phaser.Scene {
 
 
 class TaskScene3 extends Phaser.Scene {
-	constructor() {
+	constructor(gameData) {
 		super({
 			key: 'TaskScene3'
 		});
+		this.gameData = gameData;
 	}
 
 	create() {
 
 		this.cameras.main.setBackgroundColor('rgba(240, 240, 240)');
+		/*
 
-		/*this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		for(var i = 0; i < 10; i++) {
-		var x = Phaser.Math.RND.between(0, this.physics.world.bounds.width);
-		var y = Phaser.Math.RND.between(0, this.physics.world.bounds.height);
-			// parameters are x, y, width, height
-		this.spawns.create(x, y, 20, 20);     
-		
-		}        
-		this.physics.add.overlap(this.player, this.spawns, this.onMeetEnemy, false, this);
-		
-		*/
 		this.graphics = this.add.graphics();
 		this.graphics.lineStyle(1, 240, 240, 240);
 		this.graphics.fillStyle(0x031f4c, 1);
@@ -733,6 +724,61 @@ class TaskScene3 extends Phaser.Scene {
 			var begriff3 = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff3').setInteractive();
 			this.input.setDraggable(begriff3);
 		}
+		*/
+
+
+		// new code
+
+		this.cameras.main.setBackgroundColor('rgba(0,0,0)');
+
+		this.noItems = this.gameData.items.length;
+		this.overlaps = new Array(this.noItems);
+		this.gameData.items.sort();
+
+		const borderWidth = 50;
+		const rowDist = 30;
+		const maxConsInRow = 3;
+		const boxWidth = 50;
+		const boxHeight = 50;
+		const boxGap = (this.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow - 1);
+
+		this.containers1 = this.add.group();
+		this.containers2 = this.add.group();
+		for (var i = 0; i < this.noItems; i++) {
+			// make target box
+			var area = this.add.rectangle(0, 0, boxWidth, boxHeight, 0xf54242);
+
+			this.container1 = this.add.container(
+				borderWidth + boxWidth / 2 + (i % maxConsInRow) * (boxWidth + boxGap),
+				this.physics.world.bounds.height / 2 + (Math.ceil((i + 1) / maxConsInRow) - 1) * (boxHeight + rowDist)
+			);
+			this.container1.setSize(boxWidth, boxHeight);
+			this.container1.add(area);
+			this.physics.world.enable(this.container1);
+			this.add.text(0, 0, this.gameData.group1);
+
+			this.containers1.add(this.container1);
+
+			// make text field
+			var text = this.add.text(0, 0, this.gameData.items[i])
+			text.setOrigin(0.5);
+
+			this.container2 = this.add.container(
+				Phaser.Math.RND.between(0, this.physics.world.bounds.width),
+				Phaser.Math.RND.between(0, this.physics.world.bounds.height)
+			);
+
+			this.container2.setSize(64, 24);
+			this.container2.add(text);
+			this.container2.setDepth(this.noItems + i);
+			this.container2.setInteractive();
+			this.input.setDraggable(this.container2);
+
+			this.physics.world.enable(this.container2);
+			this.physics.add.overlap(this.container1, this.container2, this.endTask, false, this);
+
+			this.containers2.add(this.container2);
+		}
 
 		this.input.dragDistanceThreshold = 16;
 
@@ -744,80 +790,40 @@ class TaskScene3 extends Phaser.Scene {
 			gameObject.y = dragY;
 		});
 
-		this.Switch1 = false;
-		this.Switch2 = false;
-		this.Switch3 = false;
-
-
-		this.physics.add.overlap(begriff1, this.Field1, this.TrueSwitch1, false, this);
-		this.physics.add.overlap(begriff1, this.Field1, this.endTask, false, this);
-		this.physics.add.overlap(begriff2, this.Field2, this.TrueSwitch2, false, this);
-		this.physics.add.overlap(begriff2, this.Field2, this.endTask, false, this);
-		this.physics.add.overlap(begriff3, this.Field3, this.TrueSwitch3, false, this);
-		this.physics.add.overlap(begriff3, this.Field3, this.endTask, false, this);
-		//this.physics.add.overlap(begriff1, this.falseField, this.FalseSwitch1, false, this);
-		//this.physics.add.overlap(begriff2, this.falseField, this.FalseSwitch2, false, this);
-		//this.physics.add.overlap(begriff3, this.falseField, this.FalseSwitch3, false, this);
-
 		this.input.on('dragend', function(pointer, gameObject) {
-			gameObject.clearTint();
 		});
 	}
 
+	update(time, delta) {
+		var cons1 = this.containers1.getChildren();
+		var cons2 = this.containers2.getChildren();
 
-	/*FalseSwitch1(player, zone, Switch1, Switch2) {
-		
-		console.log('FalseSwitch1');
-		this.Switch1 = false;		
-	}	
-	
-	FalseSwitch2(player, zone, Switch1, Switch2) {
-		
-		console.log('FalseSwitch2');
-		this.Switch2 = false;
-	}
-	
-	FalseSwitch3(player, zone, Switch1, Switch2) {
-		
-		console.log('FalseSwitch3');
-		this.Switch2 = false;
-	}
+		for (var i = 0; i < cons1.length; i++) {
+			var c1 = cons1[i];
+			var c2 = cons2[i];
 
-	*/
-	TrueSwitch1(player, zone, Switch1, Switch2, Switch3) {
-
-		console.log('TrueSwitch1');
-		this.Switch1 = true;
+			if (checkOverlap(c1, c2)) {
+				if (!this.overlaps[i]) {
+					this.overlaps[i] = true;
+				}
+			} else {
+				if (this.overlaps[i]) {
+					this.overlaps[i] = false;
+				}
+			}
+		}
 	}
 
-	TrueSwitch2(player, zone, Switch1, Switch2, Switch3) {
+	endTask() {
+		const noOverlaps = this.overlaps.filter(Boolean).length;
 
-		console.log('TrueSwitch2');
-		this.Switch2 = true;
-	}
-
-	TrueSwitch3(player, zone, Switch1, Switch2, Switch3) {
-
-		console.log('TrueSwitch3');
-		this.Switch3 = true;
-	}
-
-
-	endTask(player, zone, Switch1, Switch2, Switch3) {
-
-
-		if (this.Switch1 == true && this.Switch2 == true && this.Switch3 == true) {
-			console.log('allTrue');
+		if (noOverlaps == this.noItems) {
 			this.scene.stop('TaskScene3');
 			this.scene.resume('WorldScene');
 		}
-
 	}
-
-
-
-
 }
+
 
 // load game configuration file from server
 function loadFile(filePath) {
@@ -836,6 +842,7 @@ gameData = JSON.parse(loadFile("game.json"))
 
 var taskScene1 = new TaskScene1(gameData.task1);
 var taskScene2 = new TaskScene2(gameData.task2);
+var taskScene3 = new TaskScene3(gameData.task3);
 
 
 //Gesamteinstellungen (kein Plan warum am Ende{Hab ich wohl verkackt})
@@ -860,7 +867,7 @@ var config = {
 		WorldScene,
 		taskScene1,
 		taskScene2,
-		TaskScene3,
+		taskScene3,
 	]
 };
 
