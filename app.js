@@ -16,11 +16,41 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
+const gameRooms = {
+}
+
 const players = {};
 var noReadyPlayers = 0;
 
 io.on('connection', function(socket) {
 	console.log('a user connected: ', socket.id);
+
+
+	socket.on("isKeyValid", function(input) {
+		console.log(input)
+		const keyArray = Object.keys(gameRooms)
+			? socket.emit("keyIsValid", input)
+			: socket.emit("keyNotValid");
+	});
+
+	socket.on("getRoomCode", async function() {
+		let key = "test";
+		Object.keys(gameRooms).includes(key) ? (key = "otherKey") : key;
+		gameRooms[key] = {
+			roomKey: key,
+			randomTasks: [],
+			gameScore: 0,
+			scores: {},
+			players: {},
+			numPlayers: 0,
+		};
+		socket.emit("roomCreated", key);
+	});
+	
+	socket.on("joinRoom", (roomKey) => {
+		console.log("joined room")
+		socket.join(roomKey);
+	});
 
 	// create a new player and add it to our players object
 	players[socket.id] = {

@@ -98,10 +98,10 @@ class MultiplayerScene extends Phaser.Scene {
 
 		this.socket.on('startGame', function(playerInfo) {
 			this.scene.stop('LobbyScene');
-			this.scene.start('WorldScene', { socket: this.socket, players: playerInfo})
+			this.scene.start('WorldScene', { socket: this.socket, players: playerInfo })
 		}.bind(this));
 	}
-	
+
 
 	createAllPlayers(players) {
 		/*
@@ -155,21 +155,92 @@ class LobbyScene extends MultiplayerScene {
 		this.socket = io();
 	}
 
+	preload() {
+		this.load.html("roomform", "assets/text/codeform.html");
+	}
+
 	create() {
+
 		this.createLobbyMap();
+
+		this.boxes = this.add.graphics();
+		this.boxes.lineStyle(1, 0xffffff);
+		this.boxes.fillStyle(0xaaaaaa, 1);
 
 		this.cursors = this.input.keyboard.createCursorKeys();
 
 		// UI (Start Button)
-		this.graphics = this.add.graphics();
-		this.graphics.lineStyle(1, 0xffffff);
-		this.graphics.fillStyle(0x031f4c, 1);
-		this.graphics.strokeRect(2, 185, 318, 100);
-		this.graphics.fillRect(2, 185, 318, 100);
+		this.startField = this.add.graphics();
+		this.startField.lineStyle(1, 0xffffff);
+		this.startField.fillStyle(0x031f4c, 1);
+		this.startField.strokeRect(2, 185, 318, 100);
+		this.startField.fillRect(2, 185, 318, 100);
 
 		this.startText = this.add.text(75, 200, 'Start the Game!');
 		this.startText.setInteractive({ useHandCursor: true });
 		this.startText.on('pointerdown', () => this.emitReady());
+		
+		// request key button
+		var inX = 10;
+		var inY = 20;
+		var inWidth = 120;
+		var inHeight = 15;
+		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
+		this.boxes.fillRect(inX, inY, inWidth, inHeight);
+		this.requestButton = this.add.text(15, 20, "Request room key", {
+			fill: "#000000",
+			fontSize: "12px",
+			fintStyle: "bold",
+		});
+		this.requestButton.setInteractive();
+		this.requestButton.on("pointerdown", () => {
+			this.socket.emit("getRoomCode");
+		});
+		
+		// non valid key text
+		this.notValidText = this.add.text(160, 120, "", {
+			fill: "#000000",
+			fontSize: "12px",
+		});
+
+
+		// enter room key
+		inX = 140;
+		inY = 5;
+		inWidth = 170;
+		inHeight = 55;
+		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
+		this.boxes.fillRect(inX, inY, inWidth, inHeight);
+		this.inputElement = this.add.dom(225, 30).createFromCache("roomform");
+		this.inputElement.addListener("click");
+		this.inputElement.on("click", function(event) {
+			if (event.target.name === "enterRoom") {
+				const input = this.inputElement.getChildByName("roomform");
+				this.socket.emit("isKeyValid", input.value);
+			}
+		}.bind(this));
+		
+		// room key text
+		this.roomKeyText = this.add.text(220, 120, "", {
+			fill: "#000000",
+			fontSize: "12px",
+			fontStyle: "bold",
+		});
+
+		
+		this.socket.on("roomCreated", function(roomKey) {
+			this.roomKey = roomKey,
+			this.roomKeyText.setText(this.roomKey);
+		}.bind(this));
+
+		this.socket.on("keyNotValid", function() {
+			this.notValidText.setText("Invalid room key");
+		}.bind(this));
+
+		this.socket.on("keyIsValid", function(input) {
+			this.socket.emit("joinRoom", input);
+			this.roomKeyText.setText(input);
+		}.bind(this));
 
 		this.createMultiplayerIO();
 	}
@@ -245,11 +316,11 @@ class WorldScene extends MultiplayerScene {
 	init(data) {
 		this.socket = data.socket;
 
-		this.initPlayers = this.initStartPosition( data.players);
+		this.initPlayers = this.initStartPosition(data.players);
 		this.isInBattle = false;
 	}
-	
-	
+
+
 	initStartPosition(players) {
 		Object.keys(players).forEach((id) => {
 			players[id].x = 50;
@@ -885,7 +956,6 @@ var taskScene1 = new TaskScene1(gameData.task1);
 var taskScene2 = new TaskScene2(gameData.task2);
 var taskScene3 = new TaskScene3(gameData.task3);
 
-
 var config = {
 	type: Phaser.WEBGL,
 	parent: 'content',
@@ -899,6 +969,9 @@ var config = {
 			gravity: { y: 0 },
 			debug: true
 		}
+	},
+	dom: {
+		createContainer: true,
 	},
 	scene: [
 		BootScene,
