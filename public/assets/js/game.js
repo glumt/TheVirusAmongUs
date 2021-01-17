@@ -11,21 +11,17 @@ class BootScene extends Phaser.Scene {
 	}
 
 	preload() {
-		this.load.tilemapTiledJSON('map', 'assets/tilemap.json');
-		this.load.image('mainlevbuild', 'assets/mainlevbuild.png');
-		this.load.image('teiletiles', 'assets/teiletiles.png');
-		this.load.image('wallstileset', 'assets/wallstileset.png');
-		this.load.image('objecttiles', 'assets/objecttiles.png');
-		this.load.image('begriff1', 'assets/Begriff1.png');
-		this.load.image('begriff2', 'assets/Begriff2.png');
-		this.load.image('begriff3', 'assets/Begriff3.png');
+		this.load.tilemapTiledJSON('map', 'assets/backgrounds/tilemap.json');
+		this.load.image('mainlevbuild', 'assets/backgrounds/mainlevbuild.png');
+		this.load.image('teiletiles', 'assets/backgrounds/teiletiles.png');
+		this.load.image('wallstileset', 'assets/backgrounds/wallstileset.png');
+		this.load.image('objecttiles', 'assets/sprites/objecttiles.png');
 
+		this.load.spritesheet('bluespritesheet', 'assets/spritesheet/bluespritesheet.png', { frameWidth: 32, frameHeight: 32 });
 
-		this.load.spritesheet('bluespritesheet', 'assets/bluespritesheet.png', { frameWidth: 32, frameHeight: 32 });
-
-		this.load.image('dragonblue', 'assets/dragonblue.png');
-		this.load.image('dragonred', 'assets/dragonred.png');
-		this.load.image('lobby', 'assets/lobby.png');
+		this.load.image('dragonblue', 'assets/sprites/dragonblue.png');
+		this.load.image('dragonred', 'assets/sprites/dragonred.png');
+		this.load.image('lobby', 'assets/backgrounds/lobby.png');
 	}
 
 	create() {
@@ -684,12 +680,9 @@ class TaskScene2 extends Phaser.Scene {
 
 		for (var i = 0; i < cons1.length; i++) {
 			var c1 = cons1[i];
-			console.log(c1.getBounds(), this.group1Field.getBounds())
 			if (checkOverlap(c1, this.group1Field)) {
-				console.log(true)
 				this.overlapG1[i] = true;
 			} else {
-				console.log(false)
 				this.overlapG1[i] = false;
 			}
 		}
@@ -699,10 +692,8 @@ class TaskScene2 extends Phaser.Scene {
 			var c2 = cons2[i];
 
 			if (checkOverlap(c2, this.group2Field)) {
-				console.log(true)
 				this.overlapG2[i] = true;
 			} else {
-				console.log(false)
 				this.overlapG2[i] = false;
 			}
 		}
@@ -731,7 +722,6 @@ class TaskScene2 extends Phaser.Scene {
 
 			if (checkOverlap(c1, this.group1Field)) {
 				if (!this.overlapG1[i]) {
-					console.log("overlap")
 					this.overlapG1[i] = true;
 				}
 			} else {
@@ -748,7 +738,6 @@ class TaskScene2 extends Phaser.Scene {
 
 			if (checkOverlap(c2, this.group2Field)) {
 				if (!this.overlapG2[i]) {
-					console.log("overlap")
 					this.overlapG2[i] = true;
 				}
 			} else {
@@ -781,55 +770,6 @@ class TaskScene3 extends Phaser.Scene {
 	}
 
 	create() {
-
-		this.cameras.main.setBackgroundColor('rgba(240, 240, 240)');
-		/*
-
-		this.graphics = this.add.graphics();
-		this.graphics.lineStyle(1, 240, 240, 240);
-		this.graphics.fillStyle(0x031f4c, 1);
-		this.graphics.strokeRect(50, 100, 50, 50);
-		this.graphics.fillRect(50, 100, 50, 50);
-
-		this.graphics = this.add.graphics();
-		this.graphics.lineStyle(1, 0x031f4c);
-		this.graphics.fillStyle(0x031f4c, 1);
-		this.graphics.strokeRect(150, 100, 50, 50);
-		this.graphics.fillRect(150, 100, 50, 50);
-
-		this.graphics = this.add.graphics();
-		this.graphics.lineStyle(1, 0x031f4c);
-		this.graphics.fillStyle(0x031f4c, 1);
-		this.graphics.strokeRect(250, 100, 50, 50);
-		this.graphics.fillRect(250, 100, 50, 50);
-
-
-
-		this.falseField = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.falseField.create(0, 0, 700, 400);
-
-		this.Field1 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.Field1.create(75, 125, 50, 50);
-
-		this.Field2 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.Field2.create(175, 125, 50, 50);
-
-		this.Field3 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.Field3.create(275, 125, 50, 50);
-
-
-		for (var i = 0; i < 1; i++) {
-			var begriff1 = this.player = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff1').setInteractive();
-			this.input.setDraggable(begriff1);
-			var begriff2 = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff2').setInteractive();
-			this.input.setDraggable(begriff2);
-			var begriff3 = this.physics.add.sprite(Phaser.Math.RND.between(0, this.physics.world.bounds.width), Phaser.Math.RND.between(0, this.physics.world.bounds.height), 'begriff3').setInteractive();
-			this.input.setDraggable(begriff3);
-		}
-		*/
-
-
-		// new code
 
 		this.cameras.main.setBackgroundColor('rgba(0,0,0)');
 
