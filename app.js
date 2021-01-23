@@ -16,65 +16,73 @@ const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
-const gameRooms = {
+var gameRooms = {
 }
-
-const players = {};
-var noReadyPlayers = 0;
 
 io.on('connection', function(socket) {
 	console.log('a user connected: ', socket.id);
 
-
+	// Waiting room communication
 	socket.on("isKeyValid", function(input) {
-		console.log(input)
 		const keyArray = Object.keys(gameRooms)
 			? socket.emit("keyIsValid", input)
 			: socket.emit("keyNotValid");
 	});
 
-	socket.on("getRoomCode", async function() {
-		let key = "test";
-		Object.keys(gameRooms).includes(key) ? (key = "otherKey") : key;
-		gameRooms[key] = {
-			roomKey: key,
-			randomTasks: [],
-			gameScore: 0,
-			scores: {},
-			players: {},
-			numPlayers: 0,
+	socket.on("getRoomKey", async function() {
+		let key = keyGenerator();
+
+		if (!(key in gameRooms)) {
+			gameRooms[key] = {
+				roomKey: key,
+				randomTasks: [],
+				gameScore: 0,
+				scores: {},
+				players: {},
+				ready: {},
+				noPlayers: 0,
+			};
 		};
 		socket.emit("roomCreated", key);
 	});
-	
+
 	socket.on("joinRoom", (roomKey) => {
-		console.log("joined room")
 		socket.join(roomKey);
+		console.log("join room ", roomKey, socket.id)
+
+		gameRooms[roomKey].players[socket.id] = {
+			x: 50,
+			y: 100,
+			playerId: socket.id
+		};
+		gameRooms[roomKey].noPlayers = Object.keys(gameRooms[roomKey].players).length;
+		gameRooms[roomKey].ready[socket.id] = false;
+
+		//sending to sender-client only
+		socket.emit("setState", gameRooms[roomKey]);
+
+		socket.emit("currentPlayers", {
+			players: gameRooms[roomKey].players,
+		});
+
+		// update all other players of the new player
+		socket.broadcast.to(roomKey).emit('newPlayer', {
+			players: gameRooms[roomKey].players[socket.id],
+		});
 	});
 
-	// create a new player and add it to our players object
-	players[socket.id] = {
-		flipX: false,
-		//x: Math.floor(Math.random() * 400) + 50,
-		//y: Math.floor(Math.random() * 500) + 50,
-		x: 50,
-		y: 100,
-		playerId: socket.id
-	};
-
-	// send the players object to the new player
-	socket.emit('currentPlayers', players);
-
-	// update all other players of the new player
-	socket.broadcast.emit('newPlayer', players[socket.id]);
+	// Lobby and Game Communication
 
 	// Check if all players are ready to play
-	socket.on('playerReady', function() {
-		noReadyPlayers += 1;
+	socket.on('playerReady', function(roomKey) {
 
-		if (noReadyPlayers == Object.keys(players).length) {
+		gameRooms[roomKey].ready[socket.id] = true;
+		console.log(gameRooms[roomKey].ready)
+		var allReady = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
+
+		if (allReady) {
 			// send to all clients
-			io.emit('startGame', players);
+			io.in(roomKey).emit('startGame', gameRooms[roomKey].players);
 		}
 	});
 
@@ -82,22 +90,32 @@ io.on('connection', function(socket) {
 		socket.emit('currentPlayers', players);
 	});
 
-	// when a player disconnects, remove them from our players object
-	socket.on('disconnect', function() {
-		console.log('user disconnected: ', socket.id);
-		noReadyPlayers -= 1;
-		delete players[socket.id];
-		// emit a message to all players to remove this player
-		io.emit('disconnectPlayer', socket.id);
-	});
-
 	// when a plaayer moves, update the player data
 	socket.on('playerMovement', function(movementData) {
-		players[socket.id].x = movementData.x;
-		players[socket.id].y = movementData.y;
-		players[socket.id].flipX = movementData.flipX;
+		//console.log(movementData)
+		gameRooms[movementData.roomKey].players[socket.id].x = movementData.x;
+		gameRooms[movementData.roomKey].players[socket.id].y = movementData.y;
 		// emit a message to all players about the player that moved
-		socket.broadcast.emit('playerMoved', players[socket.id]);
+		socket.broadcast.to(movementData.roomKey).emit('playerMoved', gameRooms[movementData.roomKey].players[socket.id]);
+	});
+
+	// Other Communication
+
+	// when a player disconnects, remove them from our players object
+	socket.on('disconnecting', function() {
+
+		let roomKey= 0;
+		// remove from game object
+		for (let roomKey of socket.rooms) {
+			if (roomKey != socket.id) {
+				delete gameRooms[roomKey].ready[socket.id];
+				delete gameRooms[roomKey].players[socket.id];
+
+				// emit a message to all players to remove this player
+				io.in(roomKey).emit('disconnectPlayer', socket.id);
+			}
+		}
+		console.log('user disconnected: ', socket.id);
 	});
 });
 
@@ -160,6 +178,15 @@ function getCurrentFilenames() {
 	fs.readdirSync(__dirname).forEach(file => {
 		console.log(file);
 	});
+}
+
+function keyGenerator() {
+	let code = "";
+	let chars = "abcdefghjklmnpqrstuvwxyz0123456789";
+	for (let i = 0; i < 4; i++) {
+		code += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+	return code;
 }
 
 /*

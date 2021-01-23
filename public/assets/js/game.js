@@ -25,50 +25,28 @@ class BootScene extends Phaser.Scene {
 	}
 
 	create() {
-		this.scene.start('LobbyScene');
+		//this.scene.start('LobbyScene');
+		this.scene.start('StartScene');
 	}
 }
 
 class MultiplayerScene extends Phaser.Scene {
 	constructor(sceneName) {
 		super(sceneName);
+		this.state = {};
 	}
-
-	/*
-		init() {
-			this.SocketfromInit = false;
-		}
-		*/
 
 	// Partial class which not works on its own
 	createMultiplayerIO() {
 
 		this.otherPlayers = this.physics.add.group();
-		/*
 
-		if (this.SocketfromInit) {
-			this.socket = this.initSocket;
-			this.socket.emit('resetScene');
-		} else {
-			this.socket = io();
-		}
-		*/
-
-		this.socket.on('currentPlayers', function(players) {
-			this.createAllPlayers(players);
-			/*
-			Object.keys(players).forEach(function(id) {
-				if (players[id].playerId === this.socket.id) {
-					this.createPlayer(players[id]);
-				} else {
-					this.addOtherPlayers(players[id]);
-				}
-			}.bind(this));
-			*/
+		this.socket.on('currentPlayers', function(data) {
+			this.createAllPlayers(data.players);
 		}.bind(this));
 
-		this.socket.on('newPlayer', function(playerInfo) {
-			this.addOtherPlayers(playerInfo);
+		this.socket.on('newPlayer', function(data) {
+			this.addOtherPlayers(data.players);
 		}.bind(this));
 
 		this.socket.on('disconnectPlayer', function(playerId) {
@@ -79,6 +57,7 @@ class MultiplayerScene extends Phaser.Scene {
 			this.otherPlayers.getChildren().forEach(function(player) {
 				if (playerId === player.playerId) {
 					player.destroy();
+					this.state.noPlayers -= 1;
 				}
 			}.bind(this));
 		}.bind(this));
@@ -90,7 +69,6 @@ class MultiplayerScene extends Phaser.Scene {
 
 			this.otherPlayers.getChildren().forEach(function(player) {
 				if (playerInfo.playerId === player.playerId) {
-					player.flipX = playerInfo.flipX;
 					player.setPosition(playerInfo.x, playerInfo.y);
 				}
 			}.bind(this));
@@ -98,22 +76,12 @@ class MultiplayerScene extends Phaser.Scene {
 
 		this.socket.on('startGame', function(playerInfo) {
 			this.scene.stop('LobbyScene');
-			this.scene.start('WorldScene', { socket: this.socket, players: playerInfo })
+			this.scene.start('WorldScene', { socket: this.socket, players: playerInfo, state: this.state })
 		}.bind(this));
 	}
 
 
 	createAllPlayers(players) {
-		/*
-		Object.keys(players).forEach(function(id) {
-			console.log(players[id].playerId, this.socket.id)
-			if (players[id].playerId == this.socket.id) {
-				this.createPlayer(players[id]);
-			} else {
-				this.addOtherPlayers(players[id]);
-			}
-		}.bind(this));
-		*/
 		Object.keys(players).forEach((id) => {
 			if (players[id].playerId == this.socket.id) {
 				this.createPlayer(players[id]);
@@ -133,22 +101,21 @@ class MultiplayerScene extends Phaser.Scene {
 	emitPlayerMovement() {
 		var x = this.container.x;
 		var y = this.container.y;
-		var flipX = this.player.flipX;
-		if (this.container.oldPosition && (x !== this.container.oldPosition.x || y !== this.container.oldPosition.y || flipX !== this.container.oldPosition.flipX)) {
-			this.socket.emit('playerMovement', { x, y, flipX });
+
+		if (this.container.oldPosition && (x !== this.container.oldPosition.x || y !== this.container.oldPosition.y)) {
+			this.socket.emit('playerMovement', { x: this.container.x, y: this.container.y, roomKey: this.state.roomKey });
 		}
 		// save old position data
 		this.container.oldPosition = {
 			x: this.container.x,
 			y: this.container.y,
-			flipX: this.player.flipX
 		};
 	}
 }
 
-class LobbyScene extends MultiplayerScene {
+class StartScene extends Phaser.Scene {
 	constructor() {
-		super('LobbyScene');
+		super('StartScene');
 	}
 
 	init() {
@@ -161,25 +128,10 @@ class LobbyScene extends MultiplayerScene {
 
 	create() {
 
-		this.createLobbyMap();
-
 		this.boxes = this.add.graphics();
 		this.boxes.lineStyle(1, 0xffffff);
 		this.boxes.fillStyle(0xaaaaaa, 1);
 
-		this.cursors = this.input.keyboard.createCursorKeys();
-
-		// UI (Start Button)
-		this.startField = this.add.graphics();
-		this.startField.lineStyle(1, 0xffffff);
-		this.startField.fillStyle(0x031f4c, 1);
-		this.startField.strokeRect(2, 185, 318, 100);
-		this.startField.fillRect(2, 185, 318, 100);
-
-		this.startText = this.add.text(75, 200, 'Start the Game!');
-		this.startText.setInteractive({ useHandCursor: true });
-		this.startText.on('pointerdown', () => this.emitReady());
-		
 		// request key button
 		var inX = 10;
 		var inY = 20;
@@ -194,12 +146,12 @@ class LobbyScene extends MultiplayerScene {
 		});
 		this.requestButton.setInteractive();
 		this.requestButton.on("pointerdown", () => {
-			this.socket.emit("getRoomCode");
+			this.socket.emit("getRoomKey");
 		});
-		
+
 		// non valid key text
 		this.notValidText = this.add.text(160, 120, "", {
-			fill: "#000000",
+			fill: "#ff0000",
 			fontSize: "12px",
 		});
 
@@ -219,18 +171,25 @@ class LobbyScene extends MultiplayerScene {
 				this.socket.emit("isKeyValid", input.value);
 			}
 		}.bind(this));
-		
+
 		// room key text
-		this.roomKeyText = this.add.text(220, 120, "", {
+		inX = 200;
+		inY = 110;
+		inWidth = 40;
+		inHeight = 20;
+		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
+		this.boxes.fillRect(inX, inY, inWidth, inHeight);
+		this.roomKeyText = this.add.text(210, 115, "", {
 			fill: "#000000",
 			fontSize: "12px",
 			fontStyle: "bold",
 		});
 
-		
+
 		this.socket.on("roomCreated", function(roomKey) {
 			this.roomKey = roomKey,
-			this.roomKeyText.setText(this.roomKey);
+				this.roomKeyText.setText(this.roomKey);
+			this.createJoinButton();
 		}.bind(this));
 
 		this.socket.on("keyNotValid", function() {
@@ -238,15 +197,72 @@ class LobbyScene extends MultiplayerScene {
 		}.bind(this));
 
 		this.socket.on("keyIsValid", function(input) {
-			this.socket.emit("joinRoom", input);
+			this.createJoinButton();
 			this.roomKeyText.setText(input);
 		}.bind(this));
+	}
 
+	createJoinButton() {
+		const inWidth = 120;
+		const inHeight = 15;
+		const meanX = (this.physics.world.bounds.width - inWidth) / 2;
+		const meanY = this.physics.world.bounds.height * 0.7;
+		this.boxes.strokeRect(meanX, meanY, inWidth, inHeight);
+		this.boxes.fillRect(meanX, meanY, inWidth, inHeight);
+		this.joinButton = this.add.text(meanX, meanY, "Join Room", {
+			fill: "#000000",
+			fontSize: "12px",
+			fintStyle: "bold",
+		});
+		this.joinButton.setInteractive();
+		this.joinButton.on("pointerdown", () => { this.joinRoom() });
+	}
+
+	joinRoom() {
+		this.scene.stop('StartScene');
+		this.scene.start('LobbyScene', { socket: this.socket })
+		setTimeout(() => {
+			this.socket.emit("joinRoom", this.roomKeyText.text);
+		}, 500);
+	}
+
+
+};
+
+class LobbyScene extends MultiplayerScene {
+	constructor() {
+		super('LobbyScene');
+	}
+
+	init(data) {
+		this.socket = data.socket;
 		this.createMultiplayerIO();
 	}
 
+	create() {
+
+		this.createLobbyMap();
+
+		this.cursors = this.input.keyboard.createCursorKeys();
+
+		// UI (Start Button)
+		this.startField = this.add.graphics();
+		this.startField.lineStyle(1, 0xffffff);
+		this.startField.fillStyle(0x031f4c, 1);
+		this.startField.strokeRect(2, 185, 318, 100);
+		this.startField.fillRect(2, 185, 318, 100);
+
+		this.startText = this.add.text(75, 200, 'Start the Game!');
+		this.startText.setInteractive({ useHandCursor: true });
+		this.startText.on('pointerdown', () => this.emitReady());
+
+		this.socket.on("setState", (state) => {
+			this.state = state;
+		});
+	}
+
 	emitReady() {
-		this.socket.emit('playerReady');
+		this.socket.emit('playerReady', this.state.roomKey);
 		this.startText.setText("Waiting...");
 	}
 
@@ -262,7 +278,7 @@ class LobbyScene extends MultiplayerScene {
 	createPlayer(playerInfo) {
 		this.player = this.add.sprite(0, 0, 'bluespritesheet');
 
-		this.container = this.add.container(50, 100)
+		this.container = this.add.container(playerInfo.x, playerInfo.y)
 		this.container.setSize(32, 32);
 		this.physics.world.enable(this.container);
 		this.container.add(this.player);
@@ -304,7 +320,6 @@ class LobbyScene extends MultiplayerScene {
 			this.emitPlayerMovement()
 		}
 	}
-
 }
 
 
@@ -315,6 +330,7 @@ class WorldScene extends MultiplayerScene {
 
 	init(data) {
 		this.socket = data.socket;
+		this.state = data.state;
 
 		this.initPlayers = this.initStartPosition(data.players);
 		this.isInBattle = false;
@@ -406,16 +422,6 @@ class WorldScene extends MultiplayerScene {
 		this.physics.add.overlap(this.container, this.station1, this.onMeetTask1, false, this);
 		this.physics.add.overlap(this.container, this.station3, this.onMeetTask2, false, this);
 	}
-
-	/*
-	addOtherPlayers(playerInfo) {
-		const otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
-		otherPlayer.setTint(Math.random() * 0xffffff);
-		otherPlayer.playerId = playerInfo.playerId;
-		this.otherPlayers.add(otherPlayer);
-	}
-	*/
-
 
 	//Erzeugen der Kamera
 	updateCamera() {
@@ -975,6 +981,7 @@ var config = {
 	},
 	scene: [
 		BootScene,
+		StartScene,
 		LobbyScene,
 		WorldScene,
 		taskScene1,
