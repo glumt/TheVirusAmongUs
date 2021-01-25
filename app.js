@@ -82,7 +82,11 @@ io.on('connection', function(socket) {
 
 		if (allReady) {
 			// send to all clients
-			io.in(roomKey).emit('startGame', gameRooms[roomKey].players);
+			imposterID = Math.floor(Math.random() * gameRooms[roomKey].noPlayers)
+			io.in(roomKey).emit('startGame', {
+				players: gameRooms[roomKey].players,
+				imposterID: Object.keys(gameRooms[roomKey].players)[imposterID]
+			});
 		}
 	});
 
@@ -99,12 +103,18 @@ io.on('connection', function(socket) {
 		socket.broadcast.to(movementData.roomKey).emit('playerMoved', gameRooms[movementData.roomKey].players[socket.id]);
 	});
 
+	socket.on('taskComplete', function(data) {
+		console.log(data)
+		
+		// count task
+		// emit number of completed tasks
+	});
 	// Other Communication
 
 	// when a player disconnects, remove them from our players object
 	socket.on('disconnecting', function() {
 
-		let roomKey= 0;
+		let roomKey = 0;
 		// remove from game object
 		for (let roomKey of socket.rooms) {
 			if (roomKey != socket.id) {

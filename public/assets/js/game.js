@@ -1,6 +1,7 @@
-/**
- * 
- */
+const COLORS = {
+	MAIN_BOX: 0x031f4c,
+	MAIN_BOX_BORDER: 0xffffff,
+};
 
 class BootScene extends Phaser.Scene {
 	constructor() {
@@ -74,9 +75,10 @@ class MultiplayerScene extends Phaser.Scene {
 			}.bind(this));
 		}.bind(this));
 
-		this.socket.on('startGame', function(playerInfo) {
+		this.socket.on('startGame', function(gameInfo) {
 			this.scene.stop('LobbyScene');
-			this.scene.start('WorldScene', { socket: this.socket, players: playerInfo, state: this.state })
+			this.state.imposterID = gameInfo.imposterID;
+			this.scene.start('WorldScene', { socket: this.socket, players: gameInfo.players, state: this.state })
 		}.bind(this));
 	}
 
@@ -129,8 +131,8 @@ class StartScene extends Phaser.Scene {
 	create() {
 
 		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, 0xffffff);
-		this.boxes.fillStyle(0xaaaaaa, 1);
+		this.boxes.lineStyle(1, COLORS.MAIN_BOX);
+		this.boxes.fillStyle(COLORS.MAIN_BOX_BORDER, 1);
 
 		// request key button
 		var inX = 10;
@@ -247,8 +249,8 @@ class LobbyScene extends MultiplayerScene {
 
 		// UI (Start Button)
 		this.startField = this.add.graphics();
-		this.startField.lineStyle(1, 0xffffff);
-		this.startField.fillStyle(0x031f4c, 1);
+		this.startField.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.startField.fillStyle(COLORS.MAIN_BOX, 1);
 		this.startField.strokeRect(2, 185, 318, 100);
 		this.startField.fillRect(2, 185, 318, 100);
 
@@ -364,6 +366,14 @@ class WorldScene extends MultiplayerScene {
 		this.createMultiplayerIO();
 
 		this.createAllPlayers(this.initPlayers);
+
+		this.events.on('resume', this.checkResume)
+	}
+	checkResume(gameObj, result) {
+		if (result) {
+			this.socket.emit("taskComplete");
+			// deactivate
+		}
 	}
 
 
@@ -472,6 +482,7 @@ class WorldScene extends MultiplayerScene {
 		}
 
 	}
+
 
 
 	//fortlaufende Aktualisierungen
@@ -911,6 +922,36 @@ class TaskScene3 extends Phaser.Scene {
 
 		this.input.on('dragend', function(pointer, gameObject) {
 		});
+
+		this.createAbortButton()
+	}
+
+	createAbortButton() {
+		this.boxes = this.add.graphics();
+		this.boxes.lineStyle(1, COLORS.MAIN_BOX);
+		this.boxes.fillStyle(COLORS.MAIN_BOX_BORDER, 1);
+
+		// request key button
+		var inWidth = 30;
+		var inHeight = 30;
+		var inX = this.physics.world.bounds.width - inWidth;
+		var inY = 0;
+		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
+		this.boxes.fillRect(inX, inY, inWidth, inHeight);
+
+		inX = this.physics.world.bounds.width - inWidth / 2;
+		inY = inHeight / 2;
+		this.abortButton = this.add.text(inX, inY, "X", {
+			fill: "#ff2200",
+			fontSize: "24px",
+			fintStyle: "bold",
+			align: "center"
+		});
+		this.abortButton.setOrigin(0.5);
+		this.abortButton.setInteractive();
+		this.abortButton.on("pointerdown", () => {
+			this.abortTask();
+		});
 	}
 
 	update(time, delta) {
@@ -938,8 +979,13 @@ class TaskScene3 extends Phaser.Scene {
 
 		if (noOverlaps == this.noItems) {
 			this.scene.stop('TaskScene3');
-			this.scene.resume('WorldScene');
+			this.scene.resume('WorldScene', true);
 		}
+	}
+
+	abortTask() {
+		this.scene.stop('TaskScene3');
+		this.scene.resume('WorldScene', false);
 	}
 }
 
