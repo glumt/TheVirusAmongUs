@@ -103,12 +103,19 @@ io.on('connection', function(socket) {
 		socket.broadcast.to(movementData.roomKey).emit('playerMoved', gameRooms[movementData.roomKey].players[socket.id]);
 	});
 
-	socket.on('taskComplete', function(data) {
-		console.log(data)
-		
-		// count task
+	socket.on('taskComplete', function(roomKey) {
+
+		gameRooms[roomKey].gameScore += 1
+
 		// emit number of completed tasks
+		io.in(roomKey).emit('updateCompletedTasks', {score: gameRooms[roomKey].gameScore})
+
+		// finish the game
+		if (gameRooms[roomKey].gameScore == gameRooms[roomKey].noTasks) {
+			io.in(roomKey).emit('gameFinish')
+		}
 	});
+
 	// Other Communication
 
 	// when a player disconnects, remove them from our players object

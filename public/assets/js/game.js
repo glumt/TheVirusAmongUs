@@ -333,9 +333,10 @@ class WorldScene extends MultiplayerScene {
 	init(data) {
 		this.socket = data.socket;
 		this.state = data.state;
+		console.log(data.state)
 
 		this.initPlayers = this.initStartPosition(data.players);
-		this.isInBattle = false;
+		this.currentBattle = "TaskScene3"
 	}
 
 
@@ -364,16 +365,22 @@ class WorldScene extends MultiplayerScene {
 
 		// listen for web socket events
 		this.createMultiplayerIO();
+		this.createGameIO();
 
 		this.createAllPlayers(this.initPlayers);
-
-		this.events.on('resume', this.checkResume)
 	}
-	checkResume(gameObj, result) {
-		if (result) {
-			this.socket.emit("taskComplete");
-			// deactivate
-		}
+
+	createGameIO() {
+		this.socket.on('updateCompletedTasks', (data) => {
+			//
+		});
+
+		this.socket.on('gameFinish', (data) => {
+			// Defender win
+
+			// Imposter wins
+
+		});
 	}
 
 
@@ -461,7 +468,8 @@ class WorldScene extends MultiplayerScene {
 	onMeetTask1(player, zone) {
 		if (this.cursors.space.isDown) {
 			this.input.keyboard.resetKeys();
-			this.scene.pause();
+			//this.scene.pause();
+			this.currentBattle = "TaskScene1"
 			this.scene.launch('TaskScene1');
 		}
 	}
@@ -470,15 +478,17 @@ class WorldScene extends MultiplayerScene {
 		if (this.cursors.space.isDown) {
 			//this.cursors.space.reset();
 			this.input.keyboard.resetKeys();
-			this.scene.pause();
+			this.currentBattle = "TaskScene2"
+			//this.scene.pause();
 			this.scene.launch('TaskScene2');
 		}
 	}
 	onMeetTask3(player, zone) {
 		if (this.cursors.space.isDown) {
 			this.input.keyboard.resetKeys();
-			this.scene.pause();
-			this.scene.launch('TaskScene3');
+			//this.scene.pause();
+			this.currentBattle = "TaskScene3"
+			this.scene.launch('TaskScene3', { socket: this.socket, roomKey: this.state.roomKey });
 		}
 
 	}
@@ -490,7 +500,7 @@ class WorldScene extends MultiplayerScene {
 		if (this.container) {
 			this.container.body.setVelocity(0);
 
-			if (this.scene.isActive('BattleScene')) {
+			if (this.scene.isActive(this.currentBattle)) {
 				return
 			}
 
@@ -857,6 +867,13 @@ class TaskScene3 extends Phaser.Scene {
 		this.gameData = gameData;
 	}
 
+	init(data) {
+		console.log(data)
+		this.socket = data.socket;
+		this.roomKey = data.roomKey;
+		this.emitComplete = true;
+	}
+
 	create() {
 
 		this.cameras.main.setBackgroundColor('rgba(0,0,0)');
@@ -931,7 +948,7 @@ class TaskScene3 extends Phaser.Scene {
 		this.boxes.lineStyle(1, COLORS.MAIN_BOX);
 		this.boxes.fillStyle(COLORS.MAIN_BOX_BORDER, 1);
 
-		// request key button
+		// abort button
 		var inWidth = 30;
 		var inHeight = 30;
 		var inX = this.physics.world.bounds.width - inWidth;
@@ -978,14 +995,18 @@ class TaskScene3 extends Phaser.Scene {
 		const noOverlaps = this.overlaps.filter(Boolean).length;
 
 		if (noOverlaps == this.noItems) {
+			if (this.emitComplete) {
+				this.socket.emit("taskComplete", this.roomKey);
+				this.emitComplete = false;
+			}
 			this.scene.stop('TaskScene3');
-			this.scene.resume('WorldScene', true);
+			this.scene.resume('WorldScene');
 		}
 	}
 
 	abortTask() {
 		this.scene.stop('TaskScene3');
-		this.scene.resume('WorldScene', false);
+		this.scene.resume('WorldScene');
 	}
 }
 
