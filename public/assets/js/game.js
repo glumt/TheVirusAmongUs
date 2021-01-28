@@ -336,7 +336,7 @@ class WorldScene extends MultiplayerScene {
 		this.state = data.state;
 
 		this.initPlayers = this.initStartPosition(data.players);
-		this.currentBattle = "TaskScene3"
+		this.currentBattle = "dummy"
 		this.StationLen = 20;
 	}
 
@@ -351,6 +351,7 @@ class WorldScene extends MultiplayerScene {
 
 	//Elemente die im Spiel erzeugt werden.
 	create() {
+		console.log(this.scene.key)
 
 		// create map
 		this.createMap();
@@ -528,8 +529,7 @@ class WorldScene extends MultiplayerScene {
 
 
 // Class master object defines abort button and end Task method
-
-class TaskScenePairs extends Phaser.Scene {
+class TaskScene extends Phaser.Scene {
 	constructor(gameData) {
 		super({
 			key: gameData.key
@@ -537,7 +537,70 @@ class TaskScenePairs extends Phaser.Scene {
 		this.gameData = gameData;
 	}
 
+	init(data) {
+		this.socket = data.socket;
+		this.roomKey = data.roomKey;
+		this.emitComplete = true;
+	}
+
 	create() {
+		this.initBoxes();
+
+		this.createTask();
+
+		// make abort key
+		this.createAbortButton();
+	}
+
+	initBoxes() {
+		this.boxes = this.add.graphics();
+		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
+	}
+
+	createAbortButton() {
+		var inWidth = 30;
+		var inHeight = 30;
+		var inX = this.physics.world.bounds.width - inWidth;
+		var inY = 0;
+		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
+		this.boxes.fillRect(inX, inY, inWidth, inHeight);
+
+		inX = this.physics.world.bounds.width - inWidth / 2;
+		inY = inHeight / 2;
+		this.abortButton = this.add.text(inX, inY, "X", {
+			fill: "#ff2200",
+			fontSize: "24px",
+			fintStyle: "bold",
+			align: "center"
+		});
+		this.abortButton.setOrigin(0.5);
+		this.abortButton.setInteractive();
+		this.abortButton.on("pointerdown", () => {
+			this.abortTask();
+		});
+	}
+
+	abortTask() {
+		this.scene.stop(this.scene.key);
+		this.scene.resume('WorldScene');
+	}
+}
+/*
+class TaskScenePairs extends Phaser.Scene {
+	constructor(gameData) {
+		super({
+			key: gameData.key
+		});
+		this.gameData = gameData;
+	}
+	*/
+class TaskScenePairs extends TaskScene {
+	constructor(gameData) {
+		super(gameData)
+	}
+
+	createTask() {
 		this.cameras.main.setBackgroundColor('rgba(0, 200, 0, 0.5)');
 
 		this.noPairs = this.gameData.part1.length;
@@ -650,7 +713,7 @@ class TaskScenePairs extends Phaser.Scene {
 
 	endTask() {
 		if (this.noOverlap == this.noPairs) {
-			this.scene.stop('TaskScene1');
+			this.scene.stop(this.scene.key);
 			this.scene.resume('WorldScene');
 		}
 	}
@@ -663,6 +726,7 @@ function checkOverlap(spriteA, spriteB) {
 	isOverlapping = Phaser.Geom.Rectangle.Overlaps(boundsA, boundsB);
 	return isOverlapping
 }
+/*
 
 class TaskSceneGroup extends Phaser.Scene {
 	constructor(gameData) {
@@ -671,8 +735,13 @@ class TaskSceneGroup extends Phaser.Scene {
 		});
 		this.gameData = gameData;
 	}
+	*/
+class TaskSceneGroup extends TaskScene {
+	constructor(gameData) {
+		super(gameData)
+	}
 
-	create() {
+	createTask() {
 
 		//this.cameras.main.setBackgroundColor('rgba(245, 66, 66)');
 		this.cameras.main.setBackgroundColor('rgba(0,0,0)');
@@ -850,19 +919,25 @@ class TaskSceneGroup extends Phaser.Scene {
 		const noOverlapsG2 = this.overlapG2.filter(Boolean).length;
 
 		if (noOverlapsG1 == this.noItems1 && noOverlapsG2 == this.noItems2) {
-			this.scene.stop('TaskScene2');
+			this.scene.stop(this.scene.key);
 			this.scene.resume('WorldScene');
 		}
 	}
 }
 
 
+	/*dd
 class TaskSceneOrder extends Phaser.Scene {
 	constructor(gameData) {
 		super({
 			key: gameData.key
 		});
 		this.gameData = gameData;
+	}
+	*/
+class TaskSceneOrder extends TaskScene {
+	constructor(gameData) {
+		super(gameData)
 	}
 
 	init(data) {
@@ -872,7 +947,7 @@ class TaskSceneOrder extends Phaser.Scene {
 		this.emitComplete = true;
 	}
 
-	create() {
+	createTask() {
 
 		this.cameras.main.setBackgroundColor('rgba(0,0,0)');
 
@@ -940,6 +1015,7 @@ class TaskSceneOrder extends Phaser.Scene {
 
 		this.createAbortButton()
 	}
+	/*
 
 	createAbortButton() {
 		this.boxes = this.add.graphics();
@@ -968,6 +1044,7 @@ class TaskSceneOrder extends Phaser.Scene {
 			this.abortTask();
 		});
 	}
+	*/
 
 	update(time, delta) {
 		var cons1 = this.containers1.getChildren();
@@ -997,15 +1074,17 @@ class TaskSceneOrder extends Phaser.Scene {
 				this.socket.emit("taskComplete", this.roomKey);
 				this.emitComplete = false;
 			}
-			this.scene.stop('TaskScene3');
+			this.scene.stop(this.scene.key);
 			this.scene.resume('WorldScene');
 		}
 	}
+	/*
 
 	abortTask() {
-		this.scene.stop('TaskScene3');
+		this.scene.stop(this.scene.key);
 		this.scene.resume('WorldScene');
 	}
+	*/
 }
 
 
