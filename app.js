@@ -71,7 +71,7 @@ io.on('connection', function(socket) {
 		});
 	});
 
-	// Lobby and Game Communication
+	// Lobby
 
 	// Check if all players are ready to play
 	socket.on('playerReady', function(roomKey) {
@@ -94,6 +94,8 @@ io.on('connection', function(socket) {
 		socket.emit('currentPlayers', players);
 	});
 
+	// Game Communication
+
 	// when a plaayer moves, update the player data
 	socket.on('playerMovement', function(movementData) {
 		//console.log(movementData)
@@ -104,20 +106,23 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('taskComplete', function(roomKey) {
-
 		gameRooms[roomKey].gameScore += 1
 
 		// emit number of completed tasks
-		io.in(roomKey).emit('updateCompletedTasks', {score: gameRooms[roomKey].gameScore})
+		io.in(roomKey).emit('updateCompletedTasks', { score: gameRooms[roomKey].gameScore })
 
 		// finish the game
 		if (gameRooms[roomKey].gameScore == gameRooms[roomKey].noTasks) {
-			io.in(roomKey).emit('gameFinish')
+			io.in(roomKey).emit('gameFinish', true)
 		}
 	});
 
-	// Other Communication
+	socket.on('reportKill', function(roomKey) {
+		// finish the game
+		io.in(roomKey).emit('gameFinish', false)
+	});
 
+	// Other Communication
 	// when a player disconnects, remove them from our players object
 	socket.on('disconnecting', function() {
 
