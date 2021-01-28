@@ -1,6 +1,6 @@
 const COLORS = {
-	MAIN_BOX: 0x031f4c,
-	MAIN_BOX_BORDER: 0xffffff,
+	MAIN_BOX: Phaser.Display.Color.GetColor(7, 14, 145),
+	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
 };
 
 class BootScene extends Phaser.Scene {
@@ -131,8 +131,8 @@ class StartScene extends Phaser.Scene {
 	create() {
 
 		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, COLORS.MAIN_BOX);
-		this.boxes.fillStyle(COLORS.MAIN_BOX_BORDER, 1);
+		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
 
 		// request key button
 		var inX = 10;
@@ -251,6 +251,7 @@ class LobbyScene extends MultiplayerScene {
 		this.startField = this.add.graphics();
 		this.startField.lineStyle(1, COLORS.MAIN_BOX_BORDER);
 		this.startField.fillStyle(COLORS.MAIN_BOX, 1);
+		// UI Box
 		this.startField.strokeRect(2, 185, 318, 100);
 		this.startField.fillRect(2, 185, 318, 100);
 
@@ -333,10 +334,10 @@ class WorldScene extends MultiplayerScene {
 	init(data) {
 		this.socket = data.socket;
 		this.state = data.state;
-		console.log(data.state)
 
 		this.initPlayers = this.initStartPosition(data.players);
 		this.currentBattle = "TaskScene3"
+		this.StationLen = 20;
 	}
 
 
@@ -434,10 +435,9 @@ class WorldScene extends MultiplayerScene {
 		this.container.body.setCollideWorldBounds(true);
 
 		this.physics.add.collider(this.container, this.walls);
-		//Trigger beim Berühren der Zonen
-		this.physics.add.overlap(this.container, this.station2, this.onMeetTask3, false, this);
-		this.physics.add.overlap(this.container, this.station1, this.onMeetTask1, false, this);
-		this.physics.add.overlap(this.container, this.station3, this.onMeetTask2, false, this);
+
+		// add collider
+		this.physics.add.overlap(this.container, this.stations, this.startTask, false, this);
 	}
 
 	//Erzeugen der Kamera
@@ -447,53 +447,48 @@ class WorldScene extends MultiplayerScene {
 		this.cameras.main.roundPixels = true;
 	}
 
-
 	createStations() {
-		//Erzeugen der Zonen über den Computern
-		this.station1 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.station1.create(400, 80, 20, 20);
+		var stationCoord = [
+			[400, 80],
+			[80, 80],
+			[240, 240],
+			[240, 430],
+			[432, 302],
+			[432, 465],
+		];
 
-		this.station2 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.station2.create(80, 80, 20, 20);
+		this.stations = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		for (var i = 0; i < stationCoord.length; i++) {
+			var x = stationCoord[i][0]
+			var y = stationCoord[i][1]
+			this.stations.create(x, y, this.StationLen, this.StationLen);
+		}
 
-		this.station3 = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.station3.create(240, 240, 20, 20);
+		// Generate n unique numbers for task selection
+		var arr = [];
+		while (arr.length < stationCoord.length) {
+			var n = Math.floor(Math.random() * NO_TASKS) + 1;
+			if (arr.indexOf(n) === -1) arr.push(n);
+		}
 
-		this.spawns = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
-		this.spawns.create(432, 302, 20, 20);
-		this.spawns.create(432, 465, 20, 20);
-		this.spawns.create(240, 430, 20, 20);
-	}
-
-	onMeetTask1(player, zone) {
-		if (this.cursors.space.isDown) {
-			this.input.keyboard.resetKeys();
-			//this.scene.pause();
-			this.currentBattle = "TaskScene1"
-			this.scene.launch('TaskScene1');
+		// assign unqiue task name to each station
+		var stat = this.stations.getChildren();
+		for (var i = 0; i < stat.length; i++) {
+			stat[i].setDataEnabled();
+			stat[i].setData("taskName", "TaskScene".concat(arr[i].toString()));
 		}
 	}
 
-	onMeetTask2(player, zone) {
+	startTask(player, zone) {
 		if (this.cursors.space.isDown) {
-			//this.cursors.space.reset();
+			const taskName = zone.getData("taskName")
+			console.log(taskName)
 			this.input.keyboard.resetKeys();
-			this.currentBattle = "TaskScene2"
-			//this.scene.pause();
-			this.scene.launch('TaskScene2');
-		}
-	}
-	onMeetTask3(player, zone) {
-		if (this.cursors.space.isDown) {
-			this.input.keyboard.resetKeys();
-			//this.scene.pause();
-			this.currentBattle = "TaskScene3"
-			this.scene.launch('TaskScene3', { socket: this.socket, roomKey: this.state.roomKey });
+			this.currentBattle = taskName
+			this.scene.launch(taskName, { socket: this.socket, roomKey: this.state.roomKey });
 		}
 
 	}
-
-
 
 	//fortlaufende Aktualisierungen
 	update() {
@@ -531,10 +526,13 @@ class WorldScene extends MultiplayerScene {
 }
 
 
-class TaskScene1 extends Phaser.Scene {
+
+// Class master object defines abort button and end Task method
+
+class TaskScenePairs extends Phaser.Scene {
 	constructor(gameData) {
 		super({
-			key: 'TaskScene1'
+			key: gameData.key
 		});
 		this.gameData = gameData;
 	}
@@ -666,10 +664,10 @@ function checkOverlap(spriteA, spriteB) {
 	return isOverlapping
 }
 
-class TaskScene2 extends Phaser.Scene {
+class TaskSceneGroup extends Phaser.Scene {
 	constructor(gameData) {
 		super({
-			key: 'TaskScene2'
+			key: gameData.key
 		});
 		this.gameData = gameData;
 	}
@@ -859,10 +857,10 @@ class TaskScene2 extends Phaser.Scene {
 }
 
 
-class TaskScene3 extends Phaser.Scene {
+class TaskSceneOrder extends Phaser.Scene {
 	constructor(gameData) {
 		super({
-			key: 'TaskScene3'
+			key: gameData.key
 		});
 		this.gameData = gameData;
 	}
@@ -945,8 +943,8 @@ class TaskScene3 extends Phaser.Scene {
 
 	createAbortButton() {
 		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, COLORS.MAIN_BOX);
-		this.boxes.fillStyle(COLORS.MAIN_BOX_BORDER, 1);
+		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
 
 		// abort button
 		var inWidth = 30;
@@ -1025,9 +1023,44 @@ function loadFile(filePath) {
 
 gameData = JSON.parse(loadFile("game.json"))
 
-var taskScene1 = new TaskScene1(gameData.task1);
-var taskScene2 = new TaskScene2(gameData.task2);
-var taskScene3 = new TaskScene3(gameData.task3);
+var taskScenes = [];
+var taskString = "TaskScene";
+var taskCounter = 1;
+for (const task in gameData) {
+	var key = taskString.concat(taskCounter.toString());
+	taskDescription = gameData[task];
+	taskDescription.key = key;
+	console.log(taskDescription)
+
+	switch (taskDescription.taskType) {
+		case "pairs":
+			var scene = new TaskScenePairs(taskDescription);
+			break;
+		case "group":
+			var scene = new TaskSceneGroup(taskDescription);
+			break;
+		case "order":
+			var scene = new TaskSceneOrder(taskDescription);
+			break;
+		default:
+			console.log("Something went wrong")
+	}
+	taskScenes.push(scene);
+
+	taskCounter += 1;
+}
+
+const NO_TASKS = taskCounter - 1;
+
+var gameScenes = [
+	BootScene,
+	StartScene,
+	LobbyScene,
+	WorldScene,
+];
+
+allScenes = gameScenes.concat(taskScenes);
+
 
 var config = {
 	type: Phaser.WEBGL,
@@ -1046,15 +1079,8 @@ var config = {
 	dom: {
 		createContainer: true,
 	},
-	scene: [
-		BootScene,
-		StartScene,
-		LobbyScene,
-		WorldScene,
-		taskScene1,
-		taskScene2,
-		taskScene3,
-	]
+	// append all tasks
+	scene: allScenes,
 };
 
 var game = new Phaser.Game(config);
