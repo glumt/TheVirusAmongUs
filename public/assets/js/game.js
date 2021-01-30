@@ -12,13 +12,17 @@ class BootScene extends Phaser.Scene {
 	}
 
 	preload() {
-		this.load.tilemapTiledJSON('map', 'assets/backgrounds/tilemap.json');
-		this.load.image('mainlevbuild', 'assets/backgrounds/mainlevbuild.png');
-		this.load.image('teiletiles', 'assets/backgrounds/teiletiles.png');
-		this.load.image('wallstileset', 'assets/backgrounds/wallstileset.png');
-		this.load.image('objecttiles', 'assets/sprites/objecttiles.png');
+		this.load.tilemapTiledJSON('map', 'assets/backgrounds/map.json');
+		this.load.image('floorSheet', 'assets/spritesheet/floorSheet.png');
+		this.load.image('wallSheet', 'assets/spritesheet/wallSheetE.png');
+		this.load.image('chipSheet', 'assets/spritesheet/chipSheetE.png');
+		this.load.image('hardwareSheet', 'assets/spritesheet/hardwareSheet.png');
+		this.load.image('psuSheet', 'assets/spritesheet/psuSheet.png');
+		this.load.image('cableSheet', 'assets/spritesheet/cableSheetE.png');
+		this.load.image('collisionSheet', 'assets/spritesheet/collisionSheet.png');
+		
 
-		this.load.spritesheet('bluespritesheet', 'assets/spritesheet/bluespritesheet.png', { frameWidth: 32, frameHeight: 32 });
+		this.load.spritesheet('dude', 'assets/spritesheet/dude.png', { frameWidth: 32, frameHeight: 48 });
 
 		this.load.image('dragonblue', 'assets/sprites/dragonblue.png');
 		this.load.image('dragonred', 'assets/sprites/dragonred.png');
@@ -391,20 +395,27 @@ class WorldScene extends MultiplayerScene {
 		this.map = this.make.tilemap({ key: 'map' });
 
 		//Texturvariable = Bild im Asset-Ordner (Tileset in der JSON-Map, dazugehöriges Bild im Assets-Ordner )
-		var groundtiles = this.map.addTilesetImage('groundtiles', 'mainlevbuild');
-		var obstacletiles = this.map.addTilesetImage('obstacleteils', 'teiletiles');
-		var wallstileset = this.map.addTilesetImage('wallstileset', 'wallstileset');
-		var objecttiles = this.map.addTilesetImage('objecttileset', 'objecttiles');
+		var floorTiles = this.map.addTilesetImage('floorSet', 'floorSheet');
+		var wallTiles = this.map.addTilesetImage('wallSet', 'wallSheet',16,16,1,2);
+		var chipTiles = this.map.addTilesetImage('chipSet', 'chipSheet', 16,16,1,2);
+		var hardwareTiles = this.map.addTilesetImage('hardwareSet', 'hardwareSheet');
+		var psuTiles = this.map.addTilesetImage('psuSet', 'psuSheet');
+		var cableTiles = this.map.addTilesetImage('cableSet', 'cableSheet',16,16,1,2);
+		var collisionTiles = this.map.addTilesetImage('collisionSet', 'collisionSheet');
 
 		//Layervariable = erzeuge Statische Schicht (oder Objekt) (Name des Layers, Tileset in der JSON-Map, Position)
-		var ground = this.map.createStaticLayer('ground', groundtiles, 0, 0);
-		var obstacles = this.map.createStaticLayer('obstacles', obstacletiles, 0, 0);
-		this.walls = this.map.createStaticLayer('walls', wallstileset, 0, 0);
-		var objects = this.map.createStaticLayer('objectlayer', objecttiles, 0, 0);
+		var floorLayer = this.map.createStaticLayer('floorLayer', floorTiles, 0, 0);
+		var wallLayer = this.map.createStaticLayer('wallLayer', wallTiles, 0, 0);
+		var chipLayer = this.map.createStaticLayer('chipLayer', chipTiles, 0, 0);
+		var hardwareLayer = this.map.createStaticLayer('hardwareLayer', hardwareTiles, 0, 0);
+		var psuLayer = this.map.createDynamicLayer('psuLayer', psuTiles, 0, 0);
+		var cableLayer = this.map.createStaticLayer('cableLayer', cableTiles, 0, 0);
+		this.collisionLayer = this.map.createStaticLayer('collisionLayer', collisionTiles, 0, 0);
+		
 
 		//Collision der Layers
-		this.walls.setCollisionByExclusion([-1]);
-		objects.setCollisionByExclusion([-1]);
+		this.collisionLayer.setCollisionByExclusion([-1]);
+		//objects.setCollisionByExclusion([-1]);
 
 		//Erzeugen der Kartengröße und Ränder
 		this.physics.world.bounds.width = this.map.widthInPixels;
@@ -414,19 +425,41 @@ class WorldScene extends MultiplayerScene {
 	createAnimations() {
 		//Erzeugen der Animation (die nicht funktioniert)
 		this.anims.create({
-			key: 'walk',
-			frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-			frameRate: 3,
+			key: 'left',
+			frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+			frameRate: 10,
+			repeat: -1
+		});
+		
+		this.anims.create({
+			key: 'right',
+			frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 9 }),
+			frameRate: 10,
+			repeat: -1
+		});
+		
+		this.anims.create({
+			key: 'down',
+			frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
+			frameRate: 10,
+			repeat: -1
+		});
+		
+		this.anims.create({
+			key: 'up',
+			frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
+			frameRate: 10,
 			repeat: -1
 		});
 
 	}
 
+
 	createPlayer(playerInfo) {
-		this.player = this.add.sprite(0, 0, 'bluespritesheet');
+		this.player = this.add.sprite(0, 0, 'dude');
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
-		this.container.setSize(32, 32);
+		this.container.setSize(16, 32);
 		this.container.add(this.player);
 		this.physics.world.enable(this.container);
 
@@ -435,10 +468,11 @@ class WorldScene extends MultiplayerScene {
 
 		this.container.body.setCollideWorldBounds(true);
 
-		this.physics.add.collider(this.container, this.walls);
-
-		// add collider
-		this.physics.add.overlap(this.container, this.stations, this.startTask, false, this);
+		this.physics.add.collider(this.container, this.collisionLayer);
+		//Trigger beim Berühren der Zonen
+		this.physics.add.overlap(this.container, this.station2, this.onMeetTask3, false, this);
+		this.physics.add.overlap(this.container, this.station1, this.onMeetTask1, false, this);
+		this.physics.add.overlap(this.container, this.station3, this.onMeetTask2, false, this);
 	}
 
 	//Erzeugen der Kamera
@@ -496,28 +530,28 @@ class WorldScene extends MultiplayerScene {
 		if (this.container) {
 			this.container.body.setVelocity(0);
 
-			if (this.scene.isActive(this.currentBattle)) {
+			if (this.scene.isActive('BattleScene')) {
 				return
 			}
 
 			// Horizontal movement
 			if (this.cursors.left.isDown) {
 				this.container.body.setVelocityX(-80);
-				//this.player.anims.play('walk', true);
+				this.player.anims.play('left', true);
 			}
 			else if (this.cursors.right.isDown) {
 				this.container.body.setVelocityX(80);
-				//this.player.anims.play('walk', true);
+				this.player.anims.play('right', true);
 			}
 
 			// Vertical movement
 			if (this.cursors.up.isDown) {
 				this.container.body.setVelocityY(-80);
-				//this.player.anims.play('walk', true);
+				this.player.anims.play('down', true);
 			}
 			else if (this.cursors.down.isDown) {
 				this.container.body.setVelocityY(80);
-				//this.player.anims.play('walk', true);
+				this.player.anims.play('up', true);
 			}
 
 			// emit player movement

@@ -4,7 +4,7 @@
      "export":
         {
          "format":"json",
-         "target":"..\/..\/..\/..\/TheVirusAmongUs-main\/public\/assets\/backgrounds\/map.json"
+         "target":"tilemap.json"
         }
     },
  "height":40,
