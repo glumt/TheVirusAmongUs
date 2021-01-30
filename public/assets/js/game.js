@@ -1,6 +1,9 @@
 const COLORS = {
 	MAIN_BOX: Phaser.Display.Color.GetColor(7, 14, 145),
 	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
+	UI_TEXT: "rgb( 230, 230, 230)",
+	UI_BOX: Phaser.Display.Color.GetColor(0, 158, 171),
+	UI_BOX_BORDER: Phaser.Display.Color.GetColor(230, 230, 230),
 };
 
 class BootScene extends Phaser.Scene {
@@ -20,12 +23,10 @@ class BootScene extends Phaser.Scene {
 		this.load.image('psuSheet', 'assets/spritesheet/psuSheet.png');
 		this.load.image('cableSheet', 'assets/spritesheet/cableSheetE.png');
 		this.load.image('collisionSheet', 'assets/spritesheet/collisionSheet.png');
-		
+
 
 		this.load.spritesheet('dude', 'assets/spritesheet/dude.png', { frameWidth: 32, frameHeight: 48 });
 
-		this.load.image('dragonblue', 'assets/sprites/dragonblue.png');
-		this.load.image('dragonred', 'assets/sprites/dragonred.png');
 		this.load.image('lobby', 'assets/backgrounds/lobby.png');
 	}
 
@@ -82,6 +83,10 @@ class MultiplayerScene extends Phaser.Scene {
 		this.socket.on('startGame', function(gameInfo) {
 			this.scene.stop('LobbyScene');
 			this.state.imposterID = gameInfo.imposterID;
+
+			// start UI scene
+			this.scene.launch("UIScene");
+			// start Game
 			this.scene.start('WorldScene', { socket: this.socket, players: gameInfo.players, state: this.state })
 		}.bind(this));
 	}
@@ -143,6 +148,7 @@ class StartScene extends Phaser.Scene {
 		var inY = 20;
 		var inWidth = 120;
 		var inHeight = 15;
+		/*
 		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
 		this.boxes.fillRect(inX, inY, inWidth, inHeight);
 		this.requestButton = this.add.text(15, 20, "Request room key", {
@@ -150,6 +156,14 @@ class StartScene extends Phaser.Scene {
 			fontSize: "12px",
 			fintStyle: "bold",
 		});
+		*/
+
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "12px", fintStyle: "bold", align: "center" };
+		var inX, inY = 0;
+
+		[inX, inY] = createTextField(this, 140, 100, 130, 17);
+		this.requestButton = this.add.text(inX, inY, "Request room key", textStyle);
+		this.requestButton.setOrigin(0.5);
 		this.requestButton.setInteractive();
 		this.requestButton.on("pointerdown", () => {
 			this.socket.emit("getRoomKey");
@@ -163,14 +177,10 @@ class StartScene extends Phaser.Scene {
 
 
 		// enter room key
-		inX = 140;
-		inY = 5;
-		inWidth = 170;
-		inHeight = 55;
-		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
-		this.boxes.fillRect(inX, inY, inWidth, inHeight);
-		this.inputElement = this.add.dom(225, 30).createFromCache("roomform");
+		[inX, inY] = createTextField(this, 140, 130, 130, 50);
+		this.inputElement = this.add.dom(inX, inY).createFromCache("roomform");
 		this.inputElement.addListener("click");
+		this.inputElement.setScale(0.8)
 		this.inputElement.on("click", function(event) {
 			if (event.target.name === "enterRoom") {
 				const input = this.inputElement.getChildByName("roomform");
@@ -179,18 +189,9 @@ class StartScene extends Phaser.Scene {
 		}.bind(this));
 
 		// room key text
-		inX = 200;
-		inY = 110;
-		inWidth = 40;
-		inHeight = 20;
-		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
-		this.boxes.fillRect(inX, inY, inWidth, inHeight);
-		this.roomKeyText = this.add.text(210, 115, "", {
-			fill: "#000000",
-			fontSize: "12px",
-			fontStyle: "bold",
-		});
-
+		[inX, inY] = createTextField(this, 200, 100, 40, 17);
+		this.roomKeyText = this.add.text(inX, inY, "", textStyle);
+		this.roomKeyText.setOrigin(0.5);
 
 		this.socket.on("roomCreated", function(roomKey) {
 			this.roomKey = roomKey,
@@ -206,20 +207,33 @@ class StartScene extends Phaser.Scene {
 			this.createJoinButton();
 			this.roomKeyText.setText(input);
 		}.bind(this));
+
+
+		// Game Title
+		const titlePosX = 20;
+		const titlePosY = 10;
+
+		const titleLine1 = this.add.text(titlePosX, titlePosY, "Among", { fontFamily: "Arial Black", fontSize: 32 });
+		titleLine1.setStroke('#000000', 4);
+		const gradient = titleLine1.context.createLinearGradient(0, 0, 0, titleLine1.height);
+		gradient.addColorStop(0, '#111111');
+		gradient.addColorStop(.5, '#ffffff');
+		gradient.addColorStop(.5, '#aaaaaa');
+		gradient.addColorStop(1, '#111111');
+		titleLine1.setFill(gradient);
+
+		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "the v!rUS", { fontFamily: "Arial Black", fontSize: 32 });
+		titleLine2.setStroke('#000000', 4);
+		titleLine2.setFill(gradient);
 	}
 
 	createJoinButton() {
-		const inWidth = 120;
-		const inHeight = 15;
-		const meanX = (this.physics.world.bounds.width - inWidth) / 2;
-		const meanY = this.physics.world.bounds.height * 0.7;
-		this.boxes.strokeRect(meanX, meanY, inWidth, inHeight);
-		this.boxes.fillRect(meanX, meanY, inWidth, inHeight);
-		this.joinButton = this.add.text(meanX, meanY, "Join Room", {
-			fill: "#000000",
-			fontSize: "12px",
-			fintStyle: "bold",
-		});
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "12px", fintStyle: "bold", align: "center" };
+		var inX, inY = 0;
+
+		[inX, inY] = createTextField(this, 200, 200, 80, 17);
+		this.joinButton = this.add.text(inX, inY, "Join Room", textStyle);
+		this.joinButton.setOrigin(0.5);
 		this.joinButton.setInteractive();
 		this.joinButton.on("pointerdown", () => { this.joinRoom() });
 	}
@@ -231,9 +245,8 @@ class StartScene extends Phaser.Scene {
 			this.socket.emit("joinRoom", this.roomKeyText.text);
 		}, 500);
 	}
-
-
 };
+
 
 class LobbyScene extends MultiplayerScene {
 	constructor() {
@@ -246,20 +259,20 @@ class LobbyScene extends MultiplayerScene {
 	}
 
 	create() {
+		this.UIBoxBound = 170;
 
 		this.createLobbyMap();
 
 		this.cursors = this.input.keyboard.createCursorKeys();
 
-		// UI (Start Button)
-		this.startField = this.add.graphics();
-		this.startField.lineStyle(1, COLORS.MAIN_BOX_BORDER);
-		this.startField.fillStyle(COLORS.MAIN_BOX, 1);
-		// UI Box
-		this.startField.strokeRect(2, 185, 318, 100);
-		this.startField.fillRect(2, 185, 318, 100);
+		initBoxes(this, COLORS.MAIN_BOX, COLORS.MAIN_BOX_BORDER);
 
-		this.startText = this.add.text(75, 200, 'Start the Game!');
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "18px", fintStyle: "bold", align: "center" };
+		var inX, inY = 0;
+
+		[inX, inY] = createTextField(this, 315, this.UIBoxBound, 310, 65);
+		this.startText = this.add.text(inX, inY, "Start the Game!", textStyle);
+		this.startText.setOrigin(0.5);
 		this.startText.setInteractive({ useHandCursor: true });
 		this.startText.on('pointerdown', () => this.emitReady());
 
@@ -277,9 +290,7 @@ class LobbyScene extends MultiplayerScene {
 		this.add.image(100, 100, 'lobby');
 		this.background = this.add.tileSprite(100, 100, 0, 0, 'lobby');
 
-		this.map = this.make.tilemap({ key: 'map' });
-		this.physics.world.bounds.width = this.map.widthInPixels -= 470;
-		this.physics.world.bounds.height = this.map.heightInPixels -= 450;
+		this.physics.world.bounds.height = this.UIBoxBound;
 	}
 
 	createPlayer(playerInfo) {
@@ -336,12 +347,14 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	init(data) {
+
 		this.socket = data.socket;
 		this.state = data.state;
 
 		this.initPlayers = this.initStartPosition(data.players);
 		this.currentBattle = "dummy"
 		this.StationLen = 20;
+
 	}
 
 
@@ -355,7 +368,7 @@ class WorldScene extends MultiplayerScene {
 
 	//Elemente die im Spiel erzeugt werden.
 	create() {
-		this.initBoxes();
+		initBoxes(this, COLORS.MAIN_BOX, COLORS.MAIN_BOX_BORDER);
 
 		// create map
 		this.createMap();
@@ -369,22 +382,18 @@ class WorldScene extends MultiplayerScene {
 		// create enemies
 		this.createStations();
 
+
 		// listen for web socket events
 		this.createMultiplayerIO();
 		this.createGameIO();
 
 		this.createAllPlayers(this.initPlayers);
-	}
-
-	initBoxes() {
-		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
-		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
+		this.events.emit('setNoTasks', Object.keys(this.initPlayers).length * 5);
 	}
 
 	createGameIO() {
-		this.socket.on('updateCompletedTasks', (data) => {
-			//
+		this.socket.on('updateCompletedTasks', (score) => {
+			this.events.emit('completedTask', score);
 		});
 
 		this.socket.on('gameFinish', (data) => {
@@ -402,11 +411,11 @@ class WorldScene extends MultiplayerScene {
 
 		//Texturvariable = Bild im Asset-Ordner (Tileset in der JSON-Map, dazugehöriges Bild im Assets-Ordner )
 		var floorTiles = this.map.addTilesetImage('floorSet', 'floorSheet');
-		var wallTiles = this.map.addTilesetImage('wallSet', 'wallSheet',16,16,1,2);
-		var chipTiles = this.map.addTilesetImage('chipSet', 'chipSheet', 16,16,1,2);
+		var wallTiles = this.map.addTilesetImage('wallSet', 'wallSheet', 16, 16, 1, 2);
+		var chipTiles = this.map.addTilesetImage('chipSet', 'chipSheet', 16, 16, 1, 2);
 		var hardwareTiles = this.map.addTilesetImage('hardwareSet', 'hardwareSheet');
 		var psuTiles = this.map.addTilesetImage('psuSet', 'psuSheet');
-		var cableTiles = this.map.addTilesetImage('cableSet', 'cableSheet',16,16,1,2);
+		var cableTiles = this.map.addTilesetImage('cableSet', 'cableSheet', 16, 16, 1, 2);
 		var collisionTiles = this.map.addTilesetImage('collisionSet', 'collisionSheet');
 
 		//Layervariable = erzeuge Statische Schicht (oder Objekt) (Name des Layers, Tileset in der JSON-Map, Position)
@@ -417,7 +426,7 @@ class WorldScene extends MultiplayerScene {
 		var psuLayer = this.map.createDynamicLayer('psuLayer', psuTiles, 0, 0);
 		var cableLayer = this.map.createStaticLayer('cableLayer', cableTiles, 0, 0);
 		this.collisionLayer = this.map.createStaticLayer('collisionLayer', collisionTiles, 0, 0);
-		
+
 
 		//Collision der Layers
 		this.collisionLayer.setCollisionByExclusion([-1]);
@@ -436,21 +445,21 @@ class WorldScene extends MultiplayerScene {
 			frameRate: 10,
 			repeat: -1
 		});
-		
+
 		this.anims.create({
 			key: 'right',
 			frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 9 }),
 			frameRate: 10,
 			repeat: -1
 		});
-		
+
 		this.anims.create({
 			key: 'down',
 			frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
 			frameRate: 10,
 			repeat: -1
 		});
-		
+
 		this.anims.create({
 			key: 'up',
 			frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
@@ -480,9 +489,10 @@ class WorldScene extends MultiplayerScene {
 		this.physics.add.overlap(this.container, this.stations, this.startTask, false, this);
 
 		if (this.socket.id == this.state.imposterID) {
-			//createTextField(this, 50, 50, "Imposter");
+			this.events.emit('showImposter');
+
+			// Add imposter stuff here
 		}
-		this.scene.launch("UIScene")
 	}
 
 	//Erzeugen der Kamera
@@ -577,17 +587,42 @@ class UIScene extends Phaser.Scene {
 		super({
 			key: "UIScene"
 		});
+		this.noTasks = 0;
+		this.completedTasks = 0;
 	}
 
 
 	create() {
-		initBoxes(this);
+		initBoxes(this, COLORS.UI_BOX, COLORS.UI_BOX_BORDER);
 
-		createTextField(this, 30, 5, 25, 15, "Test", { fill: "#ff2200", fontSize: "10px", fintStyle: "bold", align: "center" });
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" };
+		var inX, inY = 0;
+
+		[inX, inY] = createTextField(this, 80, 5, 75, 15);
+		this.taskText = this.add.text(inX, inY, "Tasks: " + this.completedTasks + "/" + this.noTasks, textStyle);
+		this.taskText.setOrigin(0.5);
+
+		//  Listen for events from it
+		var ourGame = this.scene.get('WorldScene');
+		ourGame.events.on('showImposter', () => {
+			[inX, inY] = createTextField(this, 150, 5, 65, 15);
+			this.imposterField = this.add.text(inX, inY, "Imposter", textStyle);
+			this.imposterField.setOrigin(0.5);
+		});
+
+		//  Listen for events from it
+		ourGame.events.on('setNoTasks', (noTasks) => {
+			this.noTasks = noTasks;
+			this.taskText.setText("Tasks: " + this.completedTasks + "/" + this.noTasks);
+		});
+
+		//  Listen for events from it
+		ourGame.events.on('completedTask', () => {
+			this.completedTasks += 1;
+			this.taskText.setText("Tasks: " + this.completedTasks + "/" + this.noTasks);
+		});
 	}
 }
-
-
 
 
 // Class master object defines abort button and end Task method
@@ -606,7 +641,7 @@ class TaskScene extends Phaser.Scene {
 	}
 
 	create() {
-		initBoxes(this);
+		initBoxes(this, COLORS.UI_BOX, COLORS.UI_BOX_BORDER);
 
 		this.createTask();
 
@@ -614,9 +649,13 @@ class TaskScene extends Phaser.Scene {
 		this.createAbortButton();
 	}
 
-
 	createAbortButton() {
-		createTextField(this, this.physics.world.bounds.width, 0, 30, 30, "X");
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "24px", fintStyle: "bold", align: "center" };
+		var inX, inY = 0;
+
+		[inX, inY] = createTextField(this, this.physics.world.bounds.width, 0, 30, 30);
+		this.abortButton = this.add.text(inX, inY, "X", textStyle);
+		this.abortButton.setOrigin(0.5);
 		this.abortButton.setInteractive();
 		this.abortButton.on("pointerdown", () => {
 			this.abortTask();
@@ -629,27 +668,22 @@ class TaskScene extends Phaser.Scene {
 	}
 }
 
-function initBoxes(scene) {
+function initBoxes(scene, fillColor, lineColor) {
 	scene.boxes = scene.add.graphics();
-	scene.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
-	scene.boxes.fillStyle(COLORS.MAIN_BOX, 1);
+	scene.boxes.lineStyle(1, lineColor);
+	scene.boxes.fillStyle(fillColor, 1);
 }
 
-function createTextField(scene, x, y, width, height, textString = "", style = {
-	fill: "#ff2200",
-	fontSize: "24px",
-	fintStyle: "bold",
-	align: "center"
-}) {
+function createTextField(scene, x, y, width, height) {
 	var inX = x - width;
 	var inY = y;
 	scene.boxes.strokeRect(inX, inY, width, height);
 	scene.boxes.fillRect(inX, inY, width, height);
 
+	// Returning coordinates for text
 	inX = x - width / 2;
 	inY = y + height / 2;
-	scene.abortButton = scene.add.text(inX, inY, textString, style);
-	scene.abortButton.setOrigin(0.5);
+	return [inX, inY]
 }
 
 
@@ -771,6 +805,10 @@ class TaskScenePairs extends TaskScene {
 
 	endTask() {
 		if (this.noOverlap == this.noPairs) {
+			if (this.emitComplete) {
+				this.socket.emit("taskComplete", this.roomKey);
+				this.emitComplete = false;
+			}
 			this.scene.stop(this.scene.key);
 			this.scene.resume('WorldScene');
 		}
@@ -784,16 +822,8 @@ function checkOverlap(spriteA, spriteB) {
 	isOverlapping = Phaser.Geom.Rectangle.Overlaps(boundsA, boundsB);
 	return isOverlapping
 }
-/*
 
-class TaskSceneGroup extends Phaser.Scene {
-	constructor(gameData) {
-		super({
-			key: gameData.key
-		});
-		this.gameData = gameData;
-	}
-	*/
+
 class TaskSceneGroup extends TaskScene {
 	constructor(gameData) {
 		super(gameData)
@@ -977,6 +1007,10 @@ class TaskSceneGroup extends TaskScene {
 		const noOverlapsG2 = this.overlapG2.filter(Boolean).length;
 
 		if (noOverlapsG1 == this.noItems1 && noOverlapsG2 == this.noItems2) {
+			if (this.emitComplete) {
+				this.socket.emit("taskComplete", this.roomKey);
+				this.emitComplete = false;
+			}
 			this.scene.stop(this.scene.key);
 			this.scene.resume('WorldScene');
 		}
@@ -984,26 +1018,13 @@ class TaskSceneGroup extends TaskScene {
 }
 
 
-/*dd
-class TaskSceneOrder extends Phaser.Scene {
-constructor(gameData) {
-	super({
-		key: gameData.key
-	});
-	this.gameData = gameData;
-}
-*/
+
 class TaskSceneOrder extends TaskScene {
 	constructor(gameData) {
 		super(gameData)
 	}
 
-	init(data) {
-		console.log(data)
-		this.socket = data.socket;
-		this.roomKey = data.roomKey;
-		this.emitComplete = true;
-	}
+
 
 	createTask() {
 
@@ -1073,36 +1094,7 @@ class TaskSceneOrder extends TaskScene {
 
 		this.createAbortButton()
 	}
-	/*
 
-	createAbortButton() {
-		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
-		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
-
-		// abort button
-		var inWidth = 30;
-		var inHeight = 30;
-		var inX = this.physics.world.bounds.width - inWidth;
-		var inY = 0;
-		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
-		this.boxes.fillRect(inX, inY, inWidth, inHeight);
-
-		inX = this.physics.world.bounds.width - inWidth / 2;
-		inY = inHeight / 2;
-		this.abortButton = this.add.text(inX, inY, "X", {
-			fill: "#ff2200",
-			fontSize: "24px",
-			fintStyle: "bold",
-			align: "center"
-		});
-		this.abortButton.setOrigin(0.5);
-		this.abortButton.setInteractive();
-		this.abortButton.on("pointerdown", () => {
-			this.abortTask();
-		});
-	}
-	*/
 
 	update(time, delta) {
 		var cons1 = this.containers1.getChildren();
@@ -1136,13 +1128,6 @@ class TaskSceneOrder extends TaskScene {
 			this.scene.resume('WorldScene');
 		}
 	}
-	/*
-
-	abortTask() {
-		this.scene.stop(this.scene.key);
-		this.scene.resume('WorldScene');
-	}
-	*/
 }
 
 
