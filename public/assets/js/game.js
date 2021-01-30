@@ -351,7 +351,7 @@ class WorldScene extends MultiplayerScene {
 
 	//Elemente die im Spiel erzeugt werden.
 	create() {
-		console.log(this.scene.key)
+		this.initBoxes();
 
 		// create map
 		this.createMap();
@@ -370,6 +370,12 @@ class WorldScene extends MultiplayerScene {
 		this.createGameIO();
 
 		this.createAllPlayers(this.initPlayers);
+	}
+
+	initBoxes() {
+		this.boxes = this.add.graphics();
+		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
 	}
 
 	createGameIO() {
@@ -439,6 +445,11 @@ class WorldScene extends MultiplayerScene {
 
 		// add collider
 		this.physics.add.overlap(this.container, this.stations, this.startTask, false, this);
+
+		if (this.socket.id == this.state.imposterID) {
+			//createTextField(this, 50, 50, "Imposter");
+		}
+		this.scene.launch("UIScene")
 	}
 
 	//Erzeugen der Kamera
@@ -527,6 +538,24 @@ class WorldScene extends MultiplayerScene {
 }
 
 
+// UI updates on events
+class UIScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: "UIScene"
+		});
+	}
+
+
+	create() {
+		initBoxes(this);
+
+		createTextField(this, 30, 5, 25, 15, "Test", { fill: "#ff2200", fontSize: "10px", fintStyle: "bold", align: "center" });
+	}
+}
+
+
+
 
 // Class master object defines abort button and end Task method
 class TaskScene extends Phaser.Scene {
@@ -544,7 +573,7 @@ class TaskScene extends Phaser.Scene {
 	}
 
 	create() {
-		this.initBoxes();
+		initBoxes(this);
 
 		this.createTask();
 
@@ -552,29 +581,9 @@ class TaskScene extends Phaser.Scene {
 		this.createAbortButton();
 	}
 
-	initBoxes() {
-		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
-		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
-	}
 
 	createAbortButton() {
-		var inWidth = 30;
-		var inHeight = 30;
-		var inX = this.physics.world.bounds.width - inWidth;
-		var inY = 0;
-		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
-		this.boxes.fillRect(inX, inY, inWidth, inHeight);
-
-		inX = this.physics.world.bounds.width - inWidth / 2;
-		inY = inHeight / 2;
-		this.abortButton = this.add.text(inX, inY, "X", {
-			fill: "#ff2200",
-			fontSize: "24px",
-			fintStyle: "bold",
-			align: "center"
-		});
-		this.abortButton.setOrigin(0.5);
+		createTextField(this, this.physics.world.bounds.width, 0, 30, 30, "X");
 		this.abortButton.setInteractive();
 		this.abortButton.on("pointerdown", () => {
 			this.abortTask();
@@ -586,15 +595,31 @@ class TaskScene extends Phaser.Scene {
 		this.scene.resume('WorldScene');
 	}
 }
-/*
-class TaskScenePairs extends Phaser.Scene {
-	constructor(gameData) {
-		super({
-			key: gameData.key
-		});
-		this.gameData = gameData;
-	}
-	*/
+
+function initBoxes(scene) {
+	scene.boxes = scene.add.graphics();
+	scene.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+	scene.boxes.fillStyle(COLORS.MAIN_BOX, 1);
+}
+
+function createTextField(scene, x, y, width, height, textString = "", style = {
+	fill: "#ff2200",
+	fontSize: "24px",
+	fintStyle: "bold",
+	align: "center"
+}) {
+	var inX = x - width;
+	var inY = y;
+	scene.boxes.strokeRect(inX, inY, width, height);
+	scene.boxes.fillRect(inX, inY, width, height);
+
+	inX = x - width / 2;
+	inY = y + height / 2;
+	scene.abortButton = scene.add.text(inX, inY, textString, style);
+	scene.abortButton.setOrigin(0.5);
+}
+
+
 class TaskScenePairs extends TaskScene {
 	constructor(gameData) {
 		super(gameData)
@@ -926,15 +951,15 @@ class TaskSceneGroup extends TaskScene {
 }
 
 
-	/*dd
+/*dd
 class TaskSceneOrder extends Phaser.Scene {
-	constructor(gameData) {
-		super({
-			key: gameData.key
-		});
-		this.gameData = gameData;
-	}
-	*/
+constructor(gameData) {
+	super({
+		key: gameData.key
+	});
+	this.gameData = gameData;
+}
+*/
 class TaskSceneOrder extends TaskScene {
 	constructor(gameData) {
 		super(gameData)
@@ -1136,6 +1161,7 @@ var gameScenes = [
 	StartScene,
 	LobbyScene,
 	WorldScene,
+	UIScene,
 ];
 
 allScenes = gameScenes.concat(taskScenes);
