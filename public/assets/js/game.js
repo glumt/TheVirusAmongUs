@@ -1,6 +1,7 @@
 const COLORS = {
 	MAIN_BOX: Phaser.Display.Color.GetColor(7, 14, 145),
 	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
+	RED: Phaser.Display.Color.GetColor(235, 0, 0),
 	UI_TEXT: "rgb( 230, 230, 230)",
 	UI_BOX: Phaser.Display.Color.GetColor(0, 158, 171),
 	UI_BOX_BORDER: Phaser.Display.Color.GetColor(230, 230, 230),
@@ -139,28 +140,12 @@ class StartScene extends Phaser.Scene {
 
 	create() {
 
-		this.boxes = this.add.graphics();
-		this.boxes.lineStyle(1, COLORS.MAIN_BOX_BORDER);
-		this.boxes.fillStyle(COLORS.MAIN_BOX, 1);
-
-		// request key button
-		var inX = 10;
-		var inY = 20;
-		var inWidth = 120;
-		var inHeight = 15;
-		/*
-		this.boxes.strokeRect(inX, inY, inWidth, inHeight);
-		this.boxes.fillRect(inX, inY, inWidth, inHeight);
-		this.requestButton = this.add.text(15, 20, "Request room key", {
-			fill: "#000000",
-			fontSize: "12px",
-			fintStyle: "bold",
-		});
-		*/
+		initBoxes(this, COLORS.MAIN_BOX, COLORS.MAIN_BOX_BORDER);
 
 		const textStyle = { color: COLORS.UI_TEXT, fontSize: "12px", fintStyle: "bold", align: "center" };
 		var inX, inY = 0;
 
+		// request key button
 		[inX, inY] = createTextField(this, 140, 100, 130, 17);
 		this.requestButton = this.add.text(inX, inY, "Request room key", textStyle);
 		this.requestButton.setOrigin(0.5);
@@ -216,10 +201,17 @@ class StartScene extends Phaser.Scene {
 		const titleLine1 = this.add.text(titlePosX, titlePosY, "Among", { fontFamily: "Arial Black", fontSize: 32 });
 		titleLine1.setStroke('#000000', 4);
 		const gradient = titleLine1.context.createLinearGradient(0, 0, 0, titleLine1.height);
+		/*
 		gradient.addColorStop(0, '#111111');
 		gradient.addColorStop(.5, '#ffffff');
 		gradient.addColorStop(.5, '#aaaaaa');
 		gradient.addColorStop(1, '#111111');
+		*/
+		gradient.addColorStop(0, '#1f72e2');
+		gradient.addColorStop(.5, '#ffffff');
+		gradient.addColorStop(.5, '#630c33');
+		gradient.addColorStop(1, '#f01074');
+
 		titleLine1.setFill(gradient);
 
 		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "the v!rUS", { fontFamily: "Arial Black", fontSize: 32 });
@@ -354,9 +346,7 @@ class WorldScene extends MultiplayerScene {
 		this.initPlayers = this.initStartPosition(data.players);
 		this.currentBattle = "dummy"
 		this.StationLen = 20;
-
 	}
-
 
 	initStartPosition(players) {
 		Object.keys(players).forEach((id) => {
@@ -490,8 +480,6 @@ class WorldScene extends MultiplayerScene {
 
 		if (this.socket.id == this.state.imposterID) {
 			this.events.emit('showImposter');
-
-			// Add imposter stuff here
 		}
 	}
 
@@ -576,6 +564,27 @@ class WorldScene extends MultiplayerScene {
 
 			// emit player movement
 			this.emitPlayerMovement()
+
+			// IMPOSTER
+			if (this.socket.id == this.state.imposterID) {
+
+				// Add imposter stuff here
+				var otherPlayers = this.otherPlayers.getChildren();
+				var x = this.container.x;
+				var y = this.container.y;
+
+				for (var i = 0; i < otherPlayers.length; i++) {
+					var dx = (x - otherPlayers[i].x);
+					var dy = (y - otherPlayers[i].y);
+
+					var distance = Math.sqrt(dx * dx + dy * dy)
+					if (distance < 10.0) {
+						this.events.emit('enableKill');
+					} else {
+						this.events.emit('disableKill');
+					}
+				}
+			}
 		}
 	}
 }
@@ -610,6 +619,7 @@ class UIScene extends Phaser.Scene {
 			this.imposterField.setOrigin(0.5);
 		});
 
+
 		//  Listen for events from it
 		ourGame.events.on('setNoTasks', (noTasks) => {
 			this.noTasks = noTasks;
@@ -621,6 +631,45 @@ class UIScene extends Phaser.Scene {
 			this.completedTasks += 1;
 			this.taskText.setText("Tasks: " + this.completedTasks + "/" + this.noTasks);
 		});
+
+		this.createKillNotification();
+
+		ourGame.events.on('enableKill', () => {
+			this.killBox.setVisible(true)
+			this.killText.setVisible(true)
+		});
+
+		ourGame.events.on('disableKill', () => {
+			this.killBox.setVisible(false)
+			this.killText.setVisible(false)
+		});
+	}
+
+	createKillNotification() {
+		this.killBox = this.add.graphics();
+		this.killBox.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.killBox.fillStyle(COLORS.RED, 1);
+
+		var width = 130;
+		var height = 15;
+		var inX = 315 - width;
+		var inY = 220;
+		this.killBox.strokeRect(inX, inY, width, height);
+		this.killBox.fillRect(inX, inY, width, height);
+
+		// Returning coordinates for text
+		inX = 315 - width / 2;
+		inY = 220 + height / 2;
+		this.killText = this.add.text(inX, inY, "SCHLACHTE DIE SAU AB", { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" });
+		this.killText.setOrigin(0.5);
+
+		this.killBox.setVisible(false)
+		this.killText.setVisible(false)
+	}
+
+	update() {
+		if (this.showKillNote) {
+		}
 	}
 }
 
