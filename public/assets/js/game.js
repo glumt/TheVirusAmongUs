@@ -37,7 +37,7 @@ class BootScene extends Phaser.Scene {
 		this.load.image('cableSheet', 'assets/spritesheet/cableSheetE.png');
 		this.load.image('collisionSheet', 'assets/spritesheet/collisionSheet.png');
 
-		this.load.spritesheet('dude', 'assets/spritesheet/dude.png', { frameWidth: 32, frameHeight: 48 });
+		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
 
 		this.load.image('lobby', 'assets/backgrounds/lobby.png');
 	}
@@ -115,7 +115,9 @@ class MultiplayerScene extends Phaser.Scene {
 	}
 
 	addOtherPlayers(playerInfo) {
-		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'dude');
+		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'LCDTyp');
+		otherPlayer.setScale(.3);
+		otherPlayer.setSize(16, 32);
 		otherPlayer.setTint(Math.random() * 0xffffff);
 		otherPlayer.playerId = playerInfo.playerId;
 		otherPlayer.isAlive = true;
@@ -294,10 +296,12 @@ class LobbyScene extends MultiplayerScene {
 	}
 
 	createPlayer(playerInfo) {
-		this.player = this.add.sprite(0, 0, 'dude');
+		this.player = this.add.sprite(0, 0, 'LCDTyp');
+		this.player.setScale(.3);
+		this.player.setSize(16, 32);
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y)
-		this.container.setSize(32, 32);
+		this.container.setSize(16, 32);
 		this.physics.world.enable(this.container);
 		this.container.add(this.player);
 
@@ -467,32 +471,39 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	createAnimations() {
-		//Erzeugen der Animation (die nicht funktioniert)
+		//Erzeugen der Animation 
 		this.anims.create({
 			key: 'left',
-			frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 23, end: 27 }),
 			frameRate: 10,
 			repeat: -1
 		});
 
 		this.anims.create({
 			key: 'right',
-			frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 9 }),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 30, end: 33 }),
 			frameRate: 10,
 			repeat: -1
 		});
 
 		this.anims.create({
 			key: 'down',
-			frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 16, end: 22 }),
 			frameRate: 10,
 			repeat: -1
 		});
 
 		this.anims.create({
 			key: 'up',
-			frames: this.anims.generateFrameNumbers('dude', { start: 4, end: 4 }),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 3, end: 15 }),
 			frameRate: 10,
+			repeat: -1
+		});
+		
+		this.anims.create({
+			key: 'idle',
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 0, end: 2 }),
+			frameRate: 0.5,
 			repeat: -1
 		});
 
@@ -500,7 +511,9 @@ class WorldScene extends MultiplayerScene {
 
 
 	createPlayer(playerInfo) {
-		this.player = this.add.sprite(0, 0, 'dude');
+		this.player = this.add.sprite(0, 0, 'LCDTyp');
+		this.player.setScale(.3);
+		this.player.setSize(16, 32);
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(16, 32);
@@ -607,17 +620,25 @@ class WorldScene extends MultiplayerScene {
 				this.container.body.setVelocityX(80);
 				this.player.anims.play('right', true);
 			}
+			
+			else if (this.cursors.right.isUp && this.cursors.left.isUp && this.cursors.up.isUp && this.cursors.down.isUp)  {
+				
+				
+				 this.player.anims.play('idle', true);
+			}
 
 			// Vertical movement
 			if (this.cursors.up.isDown) {
 				this.container.body.setVelocityY(-80);
 				this.player.anims.play('down', true);
 			}
+					
+			
 			else if (this.cursors.down.isDown) {
 				this.container.body.setVelocityY(80);
 				this.player.anims.play('up', true);
 			}
-
+			
 			// emit player movement
 			this.emitPlayerMovement()
 
@@ -658,6 +679,7 @@ class WorldScene extends MultiplayerScene {
 				}
 			}
 		}
+		
 	}
 }
 
