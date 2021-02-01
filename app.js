@@ -109,7 +109,7 @@ io.on('connection', function(socket) {
 		gameRooms[roomKey].gameScore += 1
 
 		// emit number of completed tasks
-		io.in(roomKey).emit('updateCompletedTasks', { score: gameRooms[roomKey].gameScore })
+		io.in(roomKey).emit('updateCompletedTasks', gameRooms[roomKey].gameScore)
 
 		// finish the game
 		if (gameRooms[roomKey].gameScore == gameRooms[roomKey].noTasks) {
