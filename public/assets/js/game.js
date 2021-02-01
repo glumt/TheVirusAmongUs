@@ -3,13 +3,14 @@ const COLORS = {
 	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
 	RED: Phaser.Display.Color.GetColor(235, 0, 0),
 	DEAD: Phaser.Display.Color.GetColor(230, 230, 230),
+	DEAK: Phaser.Display.Color.GetColor(0, 0, 0),
 	UI_TEXT: "rgb( 230, 230, 230)",
 	UI_BOX: Phaser.Display.Color.GetColor(0, 158, 171),
 	UI_BOX_BORDER: Phaser.Display.Color.GetColor(230, 230, 230),
 	PLAYER: {
-		1: Phaser.Display.Color.GetColor(230, 230, 230),
-		2: Phaser.Display.Color.GetColor(230, 230, 230),
-		3: Phaser.Display.Color.GetColor(230, 230, 230),
+		1: Phaser.Display.Color.GetColor(230, 0, 0),
+		2: Phaser.Display.Color.GetColor(0, 230, 0),
+		3: Phaser.Display.Color.GetColor(0, 0, 230),
 		4: Phaser.Display.Color.GetColor(230, 230, 230),
 		5: Phaser.Display.Color.GetColor(230, 230, 230),
 		6: Phaser.Display.Color.GetColor(230, 230, 230),
@@ -118,7 +119,7 @@ class MultiplayerScene extends Phaser.Scene {
 		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'LCDTyp');
 		otherPlayer.setScale(.3);
 		otherPlayer.setSize(16, 32);
-		otherPlayer.setTint(Math.random() * 0xffffff);
+		otherPlayer.setTint(COLORS.PLAYER[playerInfo.colorId])
 		otherPlayer.playerId = playerInfo.playerId;
 		otherPlayer.isAlive = true;
 		this.otherPlayers.add(otherPlayer);
@@ -299,11 +300,12 @@ class LobbyScene extends MultiplayerScene {
 		this.player = this.add.sprite(0, 0, 'LCDTyp');
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
+		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y)
 		this.container.setSize(16, 32);
-		this.physics.world.enable(this.container);
 		this.container.add(this.player);
+		this.physics.world.enable(this.container);
 
 		this.container.body.setBounce(1);
 		this.container.body.setCollideWorldBounds(true);
@@ -359,6 +361,7 @@ class WorldScene extends MultiplayerScene {
 		this.currentBattle = "dummy"
 		this.StationLen = 20;
 		this.emitKill = false;
+		this.emitReport = false;
 		this.playerIsAlive = true;
 	}
 
@@ -400,9 +403,10 @@ class WorldScene extends MultiplayerScene {
 			this.events.emit('completedTask', score);
 		});
 
-		this.socket.on('startVote', (data) => {
+		this.socket.on('startVote', (players) => {
+			console.log(players)
 			this.scene.pause("WorldScene");
-			this.scene.launch("VoteScene", { data });
+			this.scene.launch("VoteScene", { socket: this.socket, players: players });
 		});
 
 		this.socket.on('gameFinish', (data) => {
@@ -415,17 +419,24 @@ class WorldScene extends MultiplayerScene {
 		this.socket.on('deactivatePlayer', (playerId) => {
 			var otherPlayers = this.otherPlayers.getChildren();
 
+			// Set killed player invisible
 			for (var i = 0; i < this.otherPlayers.getLength(); i++) {
 				if (otherPlayers[i].playerId != playerId) {
 					continue
 				}
 				otherPlayers[i].setAlpha(0.0);
 				otherPlayers[i].isAlive = false;
-
-				// Add new sprite at death position with report overlap
-				//this.deadPlayers.create(otherPlayers[i].x, otherPlayers[i].y, 20, 20);
+				break
 			}
 
+			// Add new sprite at death position with report overlap
+			var deadPlayer = this.add.sprite(otherPlayers[i].x, otherPlayers[i].y, 'LCDTyp');
+			deadPlayer.setScale(.3);
+			deadPlayer.setSize(16, 32);
+			deadPlayer.setTint(COLORS.DEAK)
+			this.deadPlayers.add(deadPlayer)
+
+			// Activate ghost look for dead player
 			if (this.socket.id == playerId) {
 				this.playerIsAlive = false;
 				this.container.getAt(0).setTint(COLORS.DEAD);
@@ -499,7 +510,7 @@ class WorldScene extends MultiplayerScene {
 			frameRate: 10,
 			repeat: -1
 		});
-		
+
 		this.anims.create({
 			key: 'idle',
 			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 0, end: 2 }),
@@ -514,6 +525,7 @@ class WorldScene extends MultiplayerScene {
 		this.player = this.add.sprite(0, 0, 'LCDTyp');
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
+		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(16, 32);
@@ -531,7 +543,7 @@ class WorldScene extends MultiplayerScene {
 		this.physics.add.overlap(this.container, this.stations, this.startTask, false, this);
 
 		// add dead player group
-		this.deadPlayers = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		this.deadPlayers = this.physics.add.group();
 		this.physics.add.overlap(this.container, this.deadPlayers, this.reportDeadPlayer, false, this);
 
 		if (this.socket.id == this.state.virusID) {
@@ -620,11 +632,11 @@ class WorldScene extends MultiplayerScene {
 				this.container.body.setVelocityX(80);
 				this.player.anims.play('right', true);
 			}
-			
-			else if (this.cursors.right.isUp && this.cursors.left.isUp && this.cursors.up.isUp && this.cursors.down.isUp)  {
-				
-				
-				 this.player.anims.play('idle', true);
+
+			else if (this.cursors.right.isUp && this.cursors.left.isUp && this.cursors.up.isUp && this.cursors.down.isUp) {
+
+
+				this.player.anims.play('idle', true);
 			}
 
 			// Vertical movement
@@ -632,13 +644,13 @@ class WorldScene extends MultiplayerScene {
 				this.container.body.setVelocityY(-80);
 				this.player.anims.play('down', true);
 			}
-					
-			
+
+
 			else if (this.cursors.down.isDown) {
 				this.container.body.setVelocityY(80);
 				this.player.anims.play('up', true);
 			}
-			
+
 			// emit player movement
 			this.emitPlayerMovement()
 
@@ -677,9 +689,35 @@ class WorldScene extends MultiplayerScene {
 					this.socket.emit('killPlayer', { playerId: playerId, roomKey: this.state.roomKey });
 					this.emitKill = false;
 				}
+			} else {// DEFENDER
+				var deadPlayers = this.deadPlayers.getChildren();
+				var x = this.container.x;
+				var y = this.container.y;
+				var playerClose = false;
+
+				for (var i = 0; i < deadPlayers.length; i++) {
+
+					var dx = (x - deadPlayers[i].x);
+					var dy = (y - deadPlayers[i].y);
+
+					var distance = Math.sqrt(dx * dx + dy * dy)
+					if (distance < 10.0) {
+						this.events.emit('enableReport');
+						playerClose = true;
+						this.emitReport = true;
+						break
+					} else {
+						this.events.emit('disableReport');
+					}
+				}
+
+				if (this.cursors.space.isDown && playerClose && this.emitReport) {
+					this.emitReport = false;
+				}
+
 			}
 		}
-		
+
 	}
 }
 
@@ -713,7 +751,6 @@ class UIScene extends Phaser.Scene {
 			this.virusField.setOrigin(0.5);
 		});
 
-
 		//  Listen for events from it
 		ourGame.events.on('setNoTasks', (noTasks) => {
 			this.noTasks = noTasks;
@@ -737,6 +774,20 @@ class UIScene extends Phaser.Scene {
 			this.killBox.setVisible(false)
 			this.killText.setVisible(false)
 		});
+
+		this.createReportNotification();
+
+		ourGame.events.on('enableReport', () => {
+			this.reportBox.setVisible(true)
+			this.reportText.setVisible(true)
+		});
+
+		ourGame.events.on('disableReport', () => {
+			this.reportBox.setVisible(false)
+			this.reportText.setVisible(false)
+		});
+
+
 	}
 
 	createKillNotification() {
@@ -761,6 +812,28 @@ class UIScene extends Phaser.Scene {
 		this.killText.setVisible(false)
 	}
 
+	createReportNotification() {
+		this.reportBox = this.add.graphics();
+		this.reportBox.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.reportBox.fillStyle(COLORS.UI_BOX, 1);
+
+		var width = 130;
+		var height = 15;
+		var inX = 315 - width;
+		var inY = 220;
+		this.reportBox.strokeRect(inX, inY, width, height);
+		this.reportBox.fillRect(inX, inY, width, height);
+
+		// Returning coordinates for text
+		inX = 315 - width / 2;
+		inY = 220 + height / 2;
+		this.reportText = this.add.text(inX, inY, "DEAKTIVIERUNG MELDEN", { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" });
+		this.reportText.setOrigin(0.5);
+
+		this.reportBox.setVisible(false)
+		this.reportText.setVisible(false)
+	}
+
 	update() {
 		if (this.showKillNote) {
 		}
@@ -775,25 +848,40 @@ class VoteScene extends Phaser.Scene {
 			key: "VoteScene"
 		});
 	}
-	
+
 	// receive player data
 	init(data) {
 		this.socket = data.socket;
+		this.players = data.players;
 	}
 
 	create() {
-		// render all living players
-		
-		// if dead reander dead
+
+		this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0.5)');
+
+		this.createPlayers();
+
+		this.createGameIO();
+	}
+
+	createPlayer() {
+		// render all players
 
 		// make them interactive		
-		
-		// IO Stuff
-		
-		// Send vote
-		
-		// Show result and return to main game
 
+	}
+
+	createGameIO() {
+		// Send vote
+
+		// receive result
+
+		// Show win or return to main game
+	}
+
+	return2Game() {
+		this.scene.stop('VoteScene');
+		this.scene.resume('WorldScene');
 	}
 }
 
@@ -1353,6 +1441,7 @@ var gameScenes = [
 	LobbyScene,
 	WorldScene,
 	UIScene,
+	VoteScene
 ];
 
 allScenes = gameScenes.concat(taskScenes);
