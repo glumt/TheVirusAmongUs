@@ -37,6 +37,7 @@ class BootScene extends Phaser.Scene {
 		this.load.image('psuSheet', 'assets/spritesheet/psuSheet.png');
 		this.load.image('cableSheet', 'assets/spritesheet/cableSheetE.png');
 		this.load.image('collisionSheet', 'assets/spritesheet/collisionSheet.png');
+		this.load.image('LCDTypOffline', 'assets/sprites/LCDTypOffline.png');
 
 		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
 
@@ -479,6 +480,9 @@ class WorldScene extends MultiplayerScene {
 		//Erzeugen der Kartengröße und Ränder
 		this.physics.world.bounds.width = this.map.widthInPixels;
 		this.physics.world.bounds.height = this.map.heightInPixels;
+		
+		this.sprite = this.add.sprite(100, 50, 'LCDTypOffline');
+		this.sprite.setScale(.3);
 	}
 
 	createAnimations() {
@@ -498,14 +502,14 @@ class WorldScene extends MultiplayerScene {
 		});
 
 		this.anims.create({
-			key: 'down',
+			key: 'up',
 			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 16, end: 22 }),
 			frameRate: 10,
 			repeat: -1
 		});
 
 		this.anims.create({
-			key: 'up',
+			key: 'down',
 			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 3, end: 15 }),
 			frameRate: 10,
 			repeat: -1
@@ -625,11 +629,11 @@ class WorldScene extends MultiplayerScene {
 
 			// Horizontal movement
 			if (this.cursors.left.isDown) {
-				this.container.body.setVelocityX(-80);
+				this.container.body.setVelocityX(-50);
 				this.player.anims.play('left', true);
 			}
 			else if (this.cursors.right.isDown) {
-				this.container.body.setVelocityX(80);
+				this.container.body.setVelocityX(50);
 				this.player.anims.play('right', true);
 			}
 
@@ -640,15 +644,30 @@ class WorldScene extends MultiplayerScene {
 			}
 
 			// Vertical movement
-			if (this.cursors.up.isDown) {
-				this.container.body.setVelocityY(-80);
-				this.player.anims.play('down', true);
+			if (this.cursors.up.isDown && this.cursors.left.isDown) {
+				
+				this.container.body.setVelocityX(-35);
+				this.container.body.setVelocityY(-35);
+				this.player.anims.play('up', true);
+			}
+			
+			else if (this.cursors.up.isDown && this.cursors.right.isDown) {
+				
+				this.container.body.setVelocityX(35);
+				this.container.body.setVelocityY(-35);
+				this.player.anims.play('up', true);
+				console.log("e");
+			}
+			
+			else if (this.cursors.up.isDown) {
+				this.container.body.setVelocityY(-50);
+				this.player.anims.play('up', true);
 			}
 
 
 			else if (this.cursors.down.isDown) {
-				this.container.body.setVelocityY(80);
-				this.player.anims.play('up', true);
+				this.container.body.setVelocityY(50);
+				this.player.anims.play('down', true);
 			}
 
 			// emit player movement
