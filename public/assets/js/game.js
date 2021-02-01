@@ -3,7 +3,6 @@ const COLORS = {
 	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
 	RED: Phaser.Display.Color.GetColor(235, 0, 0),
 	DEAD: Phaser.Display.Color.GetColor(230, 230, 230),
-	DEAK: Phaser.Display.Color.GetColor(0, 0, 0),
 	UI_TEXT: "rgb( 230, 230, 230)",
 	UI_BOX: Phaser.Display.Color.GetColor(0, 158, 171),
 	UI_BOX_BORDER: Phaser.Display.Color.GetColor(230, 230, 230),
@@ -121,6 +120,7 @@ class MultiplayerScene extends Phaser.Scene {
 		otherPlayer.setScale(.3);
 		otherPlayer.setSize(16, 32);
 		otherPlayer.setTint(COLORS.PLAYER[playerInfo.colorId])
+		otherPlayer = playerInfo.colorId;
 		otherPlayer.playerId = playerInfo.playerId;
 		otherPlayer.isAlive = true;
 		this.otherPlayers.add(otherPlayer);
@@ -302,6 +302,7 @@ class LobbyScene extends MultiplayerScene {
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
 		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
+		this.player.colorId = playerInfo.colorId;
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y)
 		this.container.setSize(16, 32);
@@ -419,6 +420,9 @@ class WorldScene extends MultiplayerScene {
 
 		this.socket.on('deactivatePlayer', (playerId) => {
 			var otherPlayers = this.otherPlayers.getChildren();
+			var x = 0;
+			var y = 0;
+			var cId = 0;
 
 			// Set killed player invisible
 			for (var i = 0; i < this.otherPlayers.getLength(); i++) {
@@ -427,22 +431,28 @@ class WorldScene extends MultiplayerScene {
 				}
 				otherPlayers[i].setAlpha(0.0);
 				otherPlayers[i].isAlive = false;
+				x = otherPlayers[i].x;
+				y = otherPlayers[i].y;
+				cId = otherPlayers[i].colorId;
 				break
 			}
-
-			// Add new sprite at death position with report overlap
-			var deadPlayer = this.add.sprite(otherPlayers[i].x, otherPlayers[i].y, 'LCDTyp');
-			deadPlayer.setScale(.3);
-			deadPlayer.setSize(16, 32);
-			deadPlayer.setTint(COLORS.DEAK)
-			this.deadPlayers.add(deadPlayer)
 
 			// Activate ghost look for dead player
 			if (this.socket.id == playerId) {
 				this.playerIsAlive = false;
 				this.container.getAt(0).setTint(COLORS.DEAD);
 				this.container.getAt(0).setBlendMode("ADD");
+				x = this.container.x;
+				y = this.container.y;
+				cId = this.container.getAt(0).colorId;
 			}
+
+			// Add new sprite at death position with report overlap
+			var deadPlayer = this.add.sprite(x, y, 'LCDTypOffline');
+			deadPlayer.setScale(.3);
+			deadPlayer.setSize(16, 32);
+			deadPlayer.setTint(COLORS.PLAYER[cId])
+			this.deadPlayers.add(deadPlayer)
 
 			this.emitKill = false;
 			this.events.emit('disableKill');
@@ -480,9 +490,6 @@ class WorldScene extends MultiplayerScene {
 		//Erzeugen der Kartengröße und Ränder
 		this.physics.world.bounds.width = this.map.widthInPixels;
 		this.physics.world.bounds.height = this.map.heightInPixels;
-		
-		this.sprite = this.add.sprite(100, 50, 'LCDTypOffline');
-		this.sprite.setScale(.3);
 	}
 
 	createAnimations() {
@@ -530,6 +537,7 @@ class WorldScene extends MultiplayerScene {
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
 		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
+		this.player.colorId = playerInfo.colorId;
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(16, 32);
@@ -645,20 +653,20 @@ class WorldScene extends MultiplayerScene {
 
 			// Vertical movement
 			if (this.cursors.up.isDown && this.cursors.left.isDown) {
-				
+
 				this.container.body.setVelocityX(-35);
 				this.container.body.setVelocityY(-35);
 				this.player.anims.play('up', true);
 			}
-			
+
 			else if (this.cursors.up.isDown && this.cursors.right.isDown) {
-				
+
 				this.container.body.setVelocityX(35);
 				this.container.body.setVelocityY(-35);
 				this.player.anims.play('up', true);
 				console.log("e");
 			}
-			
+
 			else if (this.cursors.up.isDown) {
 				this.container.body.setVelocityY(-50);
 				this.player.anims.play('up', true);

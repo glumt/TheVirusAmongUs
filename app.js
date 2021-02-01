@@ -55,7 +55,7 @@ io.on('connection', function(socket) {
 			y: 100,
 			playerId: socket.id,
 			vote: -1,
-			alive: true
+			alive: true,
 		};
 		gameRooms[roomKey].noPlayers = Object.keys(gameRooms[roomKey].players).length;
 		gameRooms[roomKey].players[socket.id].colorId = gameRooms[roomKey].noPlayers;
