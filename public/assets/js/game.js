@@ -2,10 +2,22 @@ const COLORS = {
 	MAIN_BOX: Phaser.Display.Color.GetColor(7, 14, 145),
 	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
 	RED: Phaser.Display.Color.GetColor(235, 0, 0),
+	DEAD: Phaser.Display.Color.GetColor(230, 230, 230),
 	UI_TEXT: "rgb( 230, 230, 230)",
 	UI_BOX: Phaser.Display.Color.GetColor(0, 158, 171),
 	UI_BOX_BORDER: Phaser.Display.Color.GetColor(230, 230, 230),
+	PLAYER: {
+		1: Phaser.Display.Color.GetColor(230, 230, 230),
+		2: Phaser.Display.Color.GetColor(230, 230, 230),
+		3: Phaser.Display.Color.GetColor(230, 230, 230),
+		4: Phaser.Display.Color.GetColor(230, 230, 230),
+		5: Phaser.Display.Color.GetColor(230, 230, 230),
+		6: Phaser.Display.Color.GetColor(230, 230, 230),
+		7: Phaser.Display.Color.GetColor(230, 230, 230),
+		8: Phaser.Display.Color.GetColor(230, 230, 230),
+	}
 };
+
 
 class BootScene extends Phaser.Scene {
 	constructor() {
@@ -25,17 +37,16 @@ class BootScene extends Phaser.Scene {
 		this.load.image('cableSheet', 'assets/spritesheet/cableSheetE.png');
 		this.load.image('collisionSheet', 'assets/spritesheet/collisionSheet.png');
 
-
 		this.load.spritesheet('dude', 'assets/spritesheet/dude.png', { frameWidth: 32, frameHeight: 48 });
 
 		this.load.image('lobby', 'assets/backgrounds/lobby.png');
 	}
 
 	create() {
-		//this.scene.start('LobbyScene');
 		this.scene.start('StartScene');
 	}
 }
+
 
 class MultiplayerScene extends Phaser.Scene {
 	constructor(sceneName) {
@@ -83,7 +94,7 @@ class MultiplayerScene extends Phaser.Scene {
 
 		this.socket.on('startGame', function(gameInfo) {
 			this.scene.stop('LobbyScene');
-			this.state.imposterID = gameInfo.imposterID;
+			this.state.virusID = gameInfo.virusID;
 
 			// start UI scene
 			this.scene.launch("UIScene");
@@ -104,9 +115,10 @@ class MultiplayerScene extends Phaser.Scene {
 	}
 
 	addOtherPlayers(playerInfo) {
-		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'bluespritesheet');
+		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'dude');
 		otherPlayer.setTint(Math.random() * 0xffffff);
 		otherPlayer.playerId = playerInfo.playerId;
+		otherPlayer.isAlive = true;
 		this.otherPlayers.add(otherPlayer);
 	}
 
@@ -124,6 +136,7 @@ class MultiplayerScene extends Phaser.Scene {
 		};
 	}
 }
+
 
 class StartScene extends Phaser.Scene {
 	constructor() {
@@ -198,15 +211,10 @@ class StartScene extends Phaser.Scene {
 		const titlePosX = 20;
 		const titlePosY = 10;
 
-		const titleLine1 = this.add.text(titlePosX, titlePosY, "Among", { fontFamily: "Arial Black", fontSize: 32 });
+		const titleLine1 = this.add.text(titlePosX, titlePosY, "A hidden", { fontFamily: "Arial Black", fontSize: 32 });
 		titleLine1.setStroke('#000000', 4);
 		const gradient = titleLine1.context.createLinearGradient(0, 0, 0, titleLine1.height);
-		/*
-		gradient.addColorStop(0, '#111111');
-		gradient.addColorStop(.5, '#ffffff');
-		gradient.addColorStop(.5, '#aaaaaa');
-		gradient.addColorStop(1, '#111111');
-		*/
+
 		gradient.addColorStop(0, '#1f72e2');
 		gradient.addColorStop(.5, '#ffffff');
 		gradient.addColorStop(.5, '#630c33');
@@ -214,7 +222,7 @@ class StartScene extends Phaser.Scene {
 
 		titleLine1.setFill(gradient);
 
-		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "the v!rUS", { fontFamily: "Arial Black", fontSize: 32 });
+		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "V!rUS", { fontFamily: "Arial Black", fontSize: 32 });
 		titleLine2.setStroke('#000000', 4);
 		titleLine2.setFill(gradient);
 	}
@@ -286,7 +294,7 @@ class LobbyScene extends MultiplayerScene {
 	}
 
 	createPlayer(playerInfo) {
-		this.player = this.add.sprite(0, 0, 'bluespritesheet');
+		this.player = this.add.sprite(0, 0, 'dude');
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y)
 		this.container.setSize(32, 32);
@@ -346,6 +354,8 @@ class WorldScene extends MultiplayerScene {
 		this.initPlayers = this.initStartPosition(data.players);
 		this.currentBattle = "dummy"
 		this.StationLen = 20;
+		this.emitKill = false;
+		this.playerIsAlive = true;
 	}
 
 	initStartPosition(players) {
@@ -386,11 +396,40 @@ class WorldScene extends MultiplayerScene {
 			this.events.emit('completedTask', score);
 		});
 
+		this.socket.on('startVote', (data) => {
+			this.scene.pause("WorldScene");
+			this.scene.launch("VoteScene", { data });
+		});
+
 		this.socket.on('gameFinish', (data) => {
-			// Defender win
+			// Defender win all tasks done
 
-			// Imposter wins
+			// Imposter kills everyone
 
+		});
+
+		this.socket.on('deactivatePlayer', (playerId) => {
+			var otherPlayers = this.otherPlayers.getChildren();
+
+			for (var i = 0; i < this.otherPlayers.getLength(); i++) {
+				if (otherPlayers[i].playerId != playerId) {
+					continue
+				}
+				otherPlayers[i].setAlpha(0.0);
+				otherPlayers[i].isAlive = false;
+
+				// Add new sprite at death position with report overlap
+				//this.deadPlayers.create(otherPlayers[i].x, otherPlayers[i].y, 20, 20);
+			}
+
+			if (this.socket.id == playerId) {
+				this.playerIsAlive = false;
+				this.container.getAt(0).setTint(COLORS.DEAD);
+				this.container.getAt(0).setBlendMode("ADD");
+			}
+
+			this.emitKill = false;
+			this.events.emit('disableKill');
 		});
 	}
 
@@ -478,7 +517,11 @@ class WorldScene extends MultiplayerScene {
 		// add collider
 		this.physics.add.overlap(this.container, this.stations, this.startTask, false, this);
 
-		if (this.socket.id == this.state.imposterID) {
+		// add dead player group
+		this.deadPlayers = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
+		this.physics.add.overlap(this.container, this.deadPlayers, this.reportDeadPlayer, false, this);
+
+		if (this.socket.id == this.state.virusID) {
 			this.events.emit('showImposter');
 		}
 	}
@@ -523,6 +566,10 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	startTask(player, zone) {
+		if (this.socket.id == this.state.virusID) {
+			return
+		}
+
 		if (this.cursors.space.isDown) {
 			const taskName = zone.getData("taskName")
 			console.log(taskName)
@@ -530,7 +577,16 @@ class WorldScene extends MultiplayerScene {
 			this.currentBattle = taskName
 			this.scene.launch(taskName, { socket: this.socket, roomKey: this.state.roomKey });
 		}
+	}
 
+	reportDeadPlayer(player, zone) {
+		if (this.socket.id == this.state.virusID) {
+			return
+		}
+
+		if (this.cursors.space.isDown) {
+			this.socket.emit('reportKill', { roomKey: this.state.roomKey });
+		}
 	}
 
 	//fortlaufende Aktualisierungen
@@ -566,23 +622,39 @@ class WorldScene extends MultiplayerScene {
 			this.emitPlayerMovement()
 
 			// IMPOSTER
-			if (this.socket.id == this.state.imposterID) {
+			if (this.socket.id == this.state.virusID) {
 
-				// Add imposter stuff here
+				// Add virus stuff here
 				var otherPlayers = this.otherPlayers.getChildren();
 				var x = this.container.x;
 				var y = this.container.y;
+				var playerClose = false;
+				var playerId = "";
 
 				for (var i = 0; i < otherPlayers.length; i++) {
+
+					if (!otherPlayers[i].isAlive) {
+						continue
+					}
+
 					var dx = (x - otherPlayers[i].x);
 					var dy = (y - otherPlayers[i].y);
 
 					var distance = Math.sqrt(dx * dx + dy * dy)
 					if (distance < 10.0) {
 						this.events.emit('enableKill');
+						playerClose = true;
+						this.emitKill = true;
+						playerId = otherPlayers[i].playerId;
+						break
 					} else {
 						this.events.emit('disableKill');
 					}
+				}
+
+				if (this.cursors.space.isDown && playerClose && this.emitKill) {
+					this.socket.emit('killPlayer', { playerId: playerId, roomKey: this.state.roomKey });
+					this.emitKill = false;
 				}
 			}
 		}
@@ -614,9 +686,9 @@ class UIScene extends Phaser.Scene {
 		//  Listen for events from it
 		var ourGame = this.scene.get('WorldScene');
 		ourGame.events.on('showImposter', () => {
-			[inX, inY] = createTextField(this, 150, 5, 65, 15);
-			this.imposterField = this.add.text(inX, inY, "Imposter", textStyle);
-			this.imposterField.setOrigin(0.5);
+			[inX, inY] = createTextField(this, 130, 5, 45, 15);
+			this.virusField = this.add.text(inX, inY, "V!RUS", textStyle);
+			this.virusField.setOrigin(0.5);
 		});
 
 
@@ -670,6 +742,36 @@ class UIScene extends Phaser.Scene {
 	update() {
 		if (this.showKillNote) {
 		}
+	}
+}
+
+
+// VoteScene to finde the virus
+class VoteScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: "VoteScene"
+		});
+	}
+	
+	// receive player data
+	init(data) {
+		this.socket = data.socket;
+	}
+
+	create() {
+		// render all living players
+		
+		// if dead reander dead
+
+		// make them interactive		
+		
+		// IO Stuff
+		
+		// Send vote
+		
+		// Show result and return to main game
+
 	}
 }
 

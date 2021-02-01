@@ -53,9 +53,11 @@ io.on('connection', function(socket) {
 		gameRooms[roomKey].players[socket.id] = {
 			x: 50,
 			y: 100,
-			playerId: socket.id
+			playerId: socket.id,
+			vote: -1
 		};
 		gameRooms[roomKey].noPlayers = Object.keys(gameRooms[roomKey].players).length;
+		gameRooms[roomKey].players[socket.id].colorId = gameRooms[roomKey].noPlayers;
 		gameRooms[roomKey].ready[socket.id] = false;
 
 		//sending to sender-client only
@@ -80,12 +82,13 @@ io.on('connection', function(socket) {
 		console.log(gameRooms[roomKey].ready)
 		var allReady = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
 
+
 		if (allReady) {
 			// send to all clients
-			imposterID = Math.floor(Math.random() * gameRooms[roomKey].noPlayers)
+			virusID = Math.floor(Math.random() * gameRooms[roomKey].noPlayers)
 			io.in(roomKey).emit('startGame', {
 				players: gameRooms[roomKey].players,
-				imposterID: Object.keys(gameRooms[roomKey].players)[imposterID]
+				virusID: Object.keys(gameRooms[roomKey].players)[virusID]
 			});
 		}
 	});
@@ -95,8 +98,6 @@ io.on('connection', function(socket) {
 	});
 
 	// Game Communication
-
-	// when a plaayer moves, update the player data
 	socket.on('playerMovement', function(movementData) {
 		//console.log(movementData)
 		gameRooms[movementData.roomKey].players[socket.id].x = movementData.x;
@@ -116,10 +117,33 @@ io.on('connection', function(socket) {
 			io.in(roomKey).emit('gameFinish', true)
 		}
 	});
-
+	
+	// virus kills
 	socket.on('reportKill', function(roomKey) {
-		// finish the game
-		io.in(roomKey).emit('gameFinish', false)
+		io.in(roomKey).emit('startVote')
+	});
+
+	socket.on('killPlayer', function(data) {
+		io.in(data.roomKey).emit('deactivatePlayer', data.playerId)
+	});
+
+	// Voting
+	socket.on('vote', function(data) {
+
+		gameRooms[data.roomKey].players[socket.id] = data.vote;
+		var allVoted = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
+
+		if (allVoted) {
+			// count votes
+			var votedNum = 1;
+			
+			// send to all clients
+			io.in(roomKey).emit('voteKill', {
+				voteNum
+			});
+			
+			// reset votes
+		}
 	});
 
 	// Other Communication
