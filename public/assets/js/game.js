@@ -37,6 +37,13 @@ class BootScene extends Phaser.Scene {
 		this.load.image('cableSheet', 'assets/spritesheet/cableSheetE.png');
 		this.load.image('collisionSheet', 'assets/spritesheet/collisionSheet.png');
 		this.load.image('LCDTypOffline', 'assets/sprites/LCDTypOffline.png');
+		this.load.image('stationOne', 'assets/sprites/one.png');
+		this.load.image('stationTwo', 'assets/sprites/two.png');
+		this.load.image('stationThree', 'assets/sprites/three.png');
+		this.load.image('stationFour', 'assets/sprites/four.png');
+		this.load.image('stationFive', 'assets/sprites/five.png');
+		this.load.image('stationSix', 'assets/sprites/six.png');
+		
 
 		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
 
@@ -300,6 +307,16 @@ class LobbyScene extends MultiplayerScene {
 		this.player = this.add.sprite(0, 0, 'LCDTyp');
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
+		
+		
+		
+		this.direction = {
+			last	: false,
+			current	: 'down'
+		};
+		
+		
+		
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y)
 		this.container.setSize(16, 32);
@@ -383,6 +400,18 @@ class WorldScene extends MultiplayerScene {
 
 		// user input
 		this.cursors = this.input.keyboard.createCursorKeys();
+		
+		//
+		
+		// mobile Controls
+		this.createMobileControls();
+		this.is_holding = {
+			left		: false,
+			right		: false,
+			up			: false,
+			down		: false,
+			direction	: false,
+		};
 
 		// create enemies
 		this.createStations();
@@ -438,6 +467,125 @@ class WorldScene extends MultiplayerScene {
 		});
 	}
 
+	createMobileControls() {
+		
+		this.zone_left = this.add.zone(0,75,100,100);
+		this.zone_left.setOrigin(0.0);
+		this.zone_left.setDepth(2);
+		this.zone_left.setScrollFactor(0);
+		
+		this.zone_right = this.add.zone(225,75,100,100);
+		this.zone_right.setOrigin(0.0);
+		this.zone_right.setDepth(2);
+		this.zone_right.setScrollFactor(0);
+		
+		this.zone_up = this.add.zone(112,0,100,100);
+		this.zone_up.setOrigin(0.0);
+		this.zone_up.setDepth(2);
+		this.zone_up.setScrollFactor(0);
+		
+		this.zone_down = this.add.zone(112,150,100,100);
+		this.zone_down.setOrigin(0.0);
+		this.zone_down.setDepth(2);
+		this.zone_down.setScrollFactor(0);
+		
+	
+		
+		// Add input callback
+		this.zone_left.setInteractive();
+		this.zone_left.on('pointerdown',() 	=> 	{ this.goLeft(); });
+		this.zone_left.on('pointerup',() 	=> 	{ this.releaseLeft();}); 
+		this.zone_left.on('pointerout',()	=>	{ this.releaseLeft();});
+		
+		this.zone_right.setInteractive();
+		this.zone_right.on('pointerdown',() 	=> 	{ this.goRight(); });
+		this.zone_right.on('pointerup',() 	=> 	{ this.releaseRight();}); 
+		this.zone_right.on('pointerout',()	=>	{ this.releaseRight();});
+		
+		this.zone_up.setInteractive();
+		this.zone_up.on('pointerdown',() 	=> 	{ this.goUp(); });
+		this.zone_up.on('pointerup',() 	=> 	{ this.releaseUp();}); 
+		this.zone_up.on('pointerout',()	=>	{ this.releaseUp();});
+		
+		this.zone_down.setInteractive();
+		this.zone_down.on('pointerdown',() 	=> 	{ this.goDown(); });
+		this.zone_down.on('pointerup',() 	=> 	{ this.releaseDown();}); 
+		this.zone_down.on('pointerout',()	=>	{ this.releaseDown();});
+		
+		
+	}
+	
+	goLeft () {
+		this.is_holding.left	    = true;
+		this.is_holding.direction	= 'left';
+	}
+	
+	goRight () {
+		this.is_holding.right	    = true;
+		this.is_holding.direction	= 'right';
+	}
+	
+	goUp () {
+		this.is_holding.up	    = true;
+		this.is_holding.direction	= 'up';
+	}
+	
+	goDown () {
+		this.is_holding.down	    = true;
+		this.is_holding.direction	= 'down';
+	}
+	
+	
+	
+	releaseLeft () {
+		this.is_holding.left		= false;
+		 if (this.is_holding.right)
+		 {
+			 this.is_holding.direction = 'right';	
+		 }
+		 else 
+		 {
+			 this.is_holding.direction =	false;
+		 }
+	}
+		 
+		 
+	releaseRight () {
+		this.is_holding.right		= false;
+		 if (this.is_holding.left)
+		 {
+			 this.is_holding.direction = 'left';	
+		 }
+		 else 
+		 {
+			 this.is_holding.direction =	false;
+		 }
+	}
+	
+	releaseDown () {
+		this.is_holding.down		= false;
+		 if (this.is_holding.up)
+		 {
+			 this.is_holding.direction = 'up';	
+		 }
+		 else 
+		 {
+			 this.is_holding.direction =	false;
+		 }
+	}
+		 
+		 
+	releaseUp () {
+		this.is_holding.up		= false;
+		 if (this.is_holding.down)
+		 {
+			 this.is_holding.direction = 'down';	
+		 }
+		 else 
+		 {
+			 this.is_holding.direction =	false;
+		 }
+	}
 
 	createMap() {
 		//Karte wird erstellt
@@ -470,8 +618,13 @@ class WorldScene extends MultiplayerScene {
 		this.physics.world.bounds.width = this.map.widthInPixels;
 		this.physics.world.bounds.height = this.map.heightInPixels;
 		
-		this.sprite = this.add.sprite(100, 50, 'LCDTypOffline');
-		this.sprite.setScale(.3);
+		this.sprite = this.add.sprite(155, 212, 'stationOne');
+		this.sprite = this.add.sprite(420, 140, 'stationTwo');
+		this.sprite = this.add.sprite(748, 57, 'stationThree');
+		this.sprite = this.add.sprite(135, 425, 'stationFour');
+		this.sprite = this.add.sprite(547, 425, 'stationFive');
+		this.sprite = this.add.sprite(748, 425, 'stationSix');
+	
 	}
 
 	createAnimations() {
@@ -499,14 +652,14 @@ class WorldScene extends MultiplayerScene {
 
 		this.anims.create({
 			key: 'down',
-			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 3, end: 15 }),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 4, end: 15 }),
 			frameRate: 10,
 			repeat: -1
 		});
 		
 		this.anims.create({
 			key: 'idle',
-			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 0, end: 2 }),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 0, end: 3}),
 			frameRate: 0.5,
 			repeat: -1
 		});
@@ -515,7 +668,7 @@ class WorldScene extends MultiplayerScene {
 
 
 	createPlayer(playerInfo) {
-		this.player = this.add.sprite(0, 0, 'LCDTyp');
+		this.player = this.add.sprite(this.x, this.y, 'LCDTyp');
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
 
@@ -542,6 +695,7 @@ class WorldScene extends MultiplayerScene {
 			this.events.emit('showImposter');
 		}
 	}
+	
 
 	//Erzeugen der Kamera
 	updateCamera() {
@@ -552,13 +706,15 @@ class WorldScene extends MultiplayerScene {
 
 	createStations() {
 		var stationCoord = [
-			[400, 80],
-			[80, 80],
-			[240, 240],
-			[240, 430],
-			[432, 302],
-			[432, 465],
+			[155, 212],
+			[420, 140],
+			[748, 57],
+			[135, 425],
+			[547, 425],
+			[748, 425],
 		];
+		
+		
 
 		this.stations = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
 		for (var i = 0; i < stationCoord.length; i++) {
@@ -632,20 +788,7 @@ class WorldScene extends MultiplayerScene {
 			}
 
 			// Vertical movement
-			if (this.cursors.up.isDown && this.cursors.left.isDown) {
-				
-				this.container.body.setVelocityX(-35);
-				this.container.body.setVelocityY(-35);
-				this.player.anims.play('up', true);
-			}
-			
-			else if (this.cursors.up.isDown && this.cursors.right.isDown) {
-				
-				this.container.body.setVelocityX(35);
-				this.container.body.setVelocityY(-35);
-				this.player.anims.play('up', true);
-				console.log("e");
-			}
+		
 			
 			else if (this.cursors.up.isDown) {
 				this.container.body.setVelocityY(-50);
@@ -658,8 +801,38 @@ class WorldScene extends MultiplayerScene {
 				this.player.anims.play('down', true);
 			}
 			
+			//Move Player sideways in mobile
+			if (this.is_holding.direction === 'left')
+			{
+				this.container.body.setVelocityX(-50);
+				this.player.anims.play('left', true);
+			}
+			else if (this.is_holding.direction === 'right')
+			{
+				this.container.body.setVelocityX(50);
+				this.player.anims.play('right', true);
+			}
+			
+			//Move Player vertically in mobile
+			
+			if (this.is_holding.direction === 'up')
+			{
+				this.player.anims.play('up', true);
+				this.container.body.setVelocityY(-50);
+				
+			}
+			else if (this.is_holding.direction === 'down')
+			{
+				this.container.body.setVelocityY(50);
+				this.player.anims.play('down', true);
+			}
+			
+			
+			
+			
 			// emit player movement
 			this.emitPlayerMovement()
+			
 
 			// IMPOSTER
 			if (this.socket.id == this.state.virusID) {
@@ -773,7 +946,7 @@ class UIScene extends Phaser.Scene {
 		// Returning coordinates for text
 		inX = 315 - width / 2;
 		inY = 220 + height / 2;
-		this.killText = this.add.text(inX, inY, "SCHLACHTE DIE SAU AB", { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" });
+		this.killText = this.add.text(inX, inY, "Deaktivieren", { color: COLORS.UI_TEXT, fontSize: "10px", fontStyle: "bold", align: "center" });
 		this.killText.setOrigin(0.5);
 
 		this.killBox.setVisible(false)
