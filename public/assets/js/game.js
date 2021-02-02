@@ -123,11 +123,12 @@ class MultiplayerScene extends Phaser.Scene {
 	}
 
 	addOtherPlayers(playerInfo) {
+		console.log(playerInfo)
 		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'LCDTyp');
 		otherPlayer.setScale(.3);
 		otherPlayer.setSize(16, 32);
 		otherPlayer.setTint(COLORS.PLAYER[playerInfo.colorId])
-		otherPlayer = playerInfo.colorId;
+		otherPlayer.colorId = playerInfo.colorId;
 		otherPlayer.playerId = playerInfo.playerId;
 		otherPlayer.isAlive = true;
 		this.otherPlayers.add(otherPlayer);
@@ -1480,8 +1481,6 @@ class TaskSceneOrder extends TaskScene {
 		super(gameData)
 	}
 
-
-
 	createTask() {
 
 		this.cameras.main.setBackgroundColor('rgba(0,0,0)');
@@ -1586,6 +1585,24 @@ class TaskSceneOrder extends TaskScene {
 	}
 }
 
+/*
+function getDisplayPosition(posCount, maxCount, this) {
+
+	var maxConsInRow = 3;
+	if ((maxCount - posCount < maxConsInRow)) {
+		maxConsInRow = maxCount - posCount;
+	}
+
+	const borderWidth = 50;
+	const rowDist = 30;
+	const boxWidth = 50;
+	const boxHeight = 50;
+	const boxGap = (this.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow - 1);
+
+	var x = borderWidth + boxWidth / 2 + (posCount % maxConsInRow) * (boxWidth + boxGap);
+	var y = this.physics.world.bounds.height / 2 + (Math.ceil((posCount + 1) / maxConsInRow) - 1) * (boxHeight + rowDist);
+	return [x, y];
+}*/
 
 // load game configuration file from server
 function loadFile(filePath) {
