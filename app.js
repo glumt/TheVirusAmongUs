@@ -54,7 +54,8 @@ io.on('connection', function(socket) {
 			x: 50,
 			y: 100,
 			playerId: socket.id,
-			vote: -1
+			vote: -1,
+			alive: true,
 		};
 		gameRooms[roomKey].noPlayers = Object.keys(gameRooms[roomKey].players).length;
 		gameRooms[roomKey].players[socket.id].colorId = gameRooms[roomKey].noPlayers;
@@ -119,11 +120,12 @@ io.on('connection', function(socket) {
 	});
 	
 	// virus kills
-	socket.on('reportKill', function(roomKey) {
-		io.in(roomKey).emit('startVote')
+	socket.on('reportKill', function(data) {
+		io.in(data.roomKey).emit('startVote', gameRooms[data.roomKey].players)
 	});
 
 	socket.on('killPlayer', function(data) {
+		gameRooms[data.roomKey].players[data.playerId].alive = false;
 		io.in(data.roomKey).emit('deactivatePlayer', data.playerId)
 	});
 
