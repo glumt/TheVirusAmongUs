@@ -131,9 +131,10 @@ io.on('connection', function(socket) {
 
 	// Voting
 	socket.on('vote', function(data) {
+		console.log(data)
 
-		gameRooms[data.roomKey].players[socket.id] = data.vote;
-		var allVoted = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
+		gameRooms[data.roomKey].players[socket.id].vote = data.vote;
+		var allVoted = Object.values(gameRooms[roomKey].vote).reduce((a, item) => a && item, true);
 
 		if (allVoted) {
 			// count votes
