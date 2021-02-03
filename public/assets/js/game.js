@@ -43,7 +43,7 @@ class BootScene extends Phaser.Scene {
 		this.load.image('stationFour', 'assets/sprites/four.png');
 		this.load.image('stationFive', 'assets/sprites/five.png');
 		this.load.image('stationSix', 'assets/sprites/six.png');
-		
+
 
 		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
 
@@ -309,12 +309,12 @@ class LobbyScene extends MultiplayerScene {
 		this.player = this.add.sprite(0, 0, 'LCDTyp');
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
-		
+
 		this.direction = {
-			last	: false,
-			current	: 'down'
+			last: false,
+			current: 'down'
 		};
-		
+
 		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
 		this.player.colorId = playerInfo.colorId;
 
@@ -401,17 +401,17 @@ class WorldScene extends MultiplayerScene {
 
 		// user input
 		this.cursors = this.input.keyboard.createCursorKeys();
-		
+
 		//
-		
+
 		// mobile Controls
 		this.createMobileControls();
 		this.is_holding = {
-			left		: false,
-			right		: false,
-			up			: false,
-			down		: false,
-			direction	: false,
+			left: false,
+			right: false,
+			up: false,
+			down: false,
+			direction: false,
 		};
 
 		// create enemies
@@ -434,7 +434,7 @@ class WorldScene extends MultiplayerScene {
 		this.socket.on('startVote', (players) => {
 			console.log(players)
 			this.scene.pause("WorldScene");
-			this.scene.launch("VoteScene", { socket: this.socket, players: players });
+			this.scene.launch("VoteScene", { socket: this.socket, state: this.state, players: players });
 		});
 
 		this.socket.on('gameFinish', (data) => {
@@ -486,123 +486,115 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	createMobileControls() {
-		
-		this.zone_left = this.add.zone(0,75,100,100);
+
+		this.zone_left = this.add.zone(0, 75, 100, 100);
 		this.zone_left.setOrigin(0.0);
 		this.zone_left.setDepth(2);
 		this.zone_left.setScrollFactor(0);
-		
-		this.zone_right = this.add.zone(225,75,100,100);
+
+		this.zone_right = this.add.zone(225, 75, 100, 100);
 		this.zone_right.setOrigin(0.0);
 		this.zone_right.setDepth(2);
 		this.zone_right.setScrollFactor(0);
-		
-		this.zone_up = this.add.zone(112,0,100,100);
+
+		this.zone_up = this.add.zone(112, 0, 100, 100);
 		this.zone_up.setOrigin(0.0);
 		this.zone_up.setDepth(2);
 		this.zone_up.setScrollFactor(0);
-		
-		this.zone_down = this.add.zone(112,150,100,100);
+
+		this.zone_down = this.add.zone(112, 150, 100, 100);
 		this.zone_down.setOrigin(0.0);
 		this.zone_down.setDepth(2);
 		this.zone_down.setScrollFactor(0);
-		
-	
-		
+
+
+
 		// Add input callback
 		this.zone_left.setInteractive();
-		this.zone_left.on('pointerdown',() 	=> 	{ this.goLeft(); });
-		this.zone_left.on('pointerup',() 	=> 	{ this.releaseLeft();}); 
-		this.zone_left.on('pointerout',()	=>	{ this.releaseLeft();});
-		
+		this.zone_left.on('pointerdown', () => { this.goLeft(); });
+		this.zone_left.on('pointerup', () => { this.releaseLeft(); });
+		this.zone_left.on('pointerout', () => { this.releaseLeft(); });
+
 		this.zone_right.setInteractive();
-		this.zone_right.on('pointerdown',() 	=> 	{ this.goRight(); });
-		this.zone_right.on('pointerup',() 	=> 	{ this.releaseRight();}); 
-		this.zone_right.on('pointerout',()	=>	{ this.releaseRight();});
-		
+		this.zone_right.on('pointerdown', () => { this.goRight(); });
+		this.zone_right.on('pointerup', () => { this.releaseRight(); });
+		this.zone_right.on('pointerout', () => { this.releaseRight(); });
+
 		this.zone_up.setInteractive();
-		this.zone_up.on('pointerdown',() 	=> 	{ this.goUp(); });
-		this.zone_up.on('pointerup',() 	=> 	{ this.releaseUp();}); 
-		this.zone_up.on('pointerout',()	=>	{ this.releaseUp();});
-		
+		this.zone_up.on('pointerdown', () => { this.goUp(); });
+		this.zone_up.on('pointerup', () => { this.releaseUp(); });
+		this.zone_up.on('pointerout', () => { this.releaseUp(); });
+
 		this.zone_down.setInteractive();
-		this.zone_down.on('pointerdown',() 	=> 	{ this.goDown(); });
-		this.zone_down.on('pointerup',() 	=> 	{ this.releaseDown();}); 
-		this.zone_down.on('pointerout',()	=>	{ this.releaseDown();});
-		
-		
+		this.zone_down.on('pointerdown', () => { this.goDown(); });
+		this.zone_down.on('pointerup', () => { this.releaseDown(); });
+		this.zone_down.on('pointerout', () => { this.releaseDown(); });
+
+
 	}
-	
-	goLeft () {
-		this.is_holding.left	    = true;
-		this.is_holding.direction	= 'left';
+
+	goLeft() {
+		this.is_holding.left = true;
+		this.is_holding.direction = 'left';
 	}
-	
-	goRight () {
-		this.is_holding.right	    = true;
-		this.is_holding.direction	= 'right';
+
+	goRight() {
+		this.is_holding.right = true;
+		this.is_holding.direction = 'right';
 	}
-	
-	goUp () {
-		this.is_holding.up	    = true;
-		this.is_holding.direction	= 'up';
+
+	goUp() {
+		this.is_holding.up = true;
+		this.is_holding.direction = 'up';
 	}
-	
-	goDown () {
-		this.is_holding.down	    = true;
-		this.is_holding.direction	= 'down';
+
+	goDown() {
+		this.is_holding.down = true;
+		this.is_holding.direction = 'down';
 	}
-	
-	
-	
-	releaseLeft () {
-		this.is_holding.left		= false;
-		 if (this.is_holding.right)
-		 {
-			 this.is_holding.direction = 'right';	
-		 }
-		 else 
-		 {
-			 this.is_holding.direction =	false;
-		 }
+
+
+
+	releaseLeft() {
+		this.is_holding.left = false;
+		if (this.is_holding.right) {
+			this.is_holding.direction = 'right';
+		}
+		else {
+			this.is_holding.direction = false;
+		}
 	}
-		 
-		 
-	releaseRight () {
-		this.is_holding.right		= false;
-		 if (this.is_holding.left)
-		 {
-			 this.is_holding.direction = 'left';	
-		 }
-		 else 
-		 {
-			 this.is_holding.direction =	false;
-		 }
+
+
+	releaseRight() {
+		this.is_holding.right = false;
+		if (this.is_holding.left) {
+			this.is_holding.direction = 'left';
+		}
+		else {
+			this.is_holding.direction = false;
+		}
 	}
-	
-	releaseDown () {
-		this.is_holding.down		= false;
-		 if (this.is_holding.up)
-		 {
-			 this.is_holding.direction = 'up';	
-		 }
-		 else 
-		 {
-			 this.is_holding.direction =	false;
-		 }
+
+	releaseDown() {
+		this.is_holding.down = false;
+		if (this.is_holding.up) {
+			this.is_holding.direction = 'up';
+		}
+		else {
+			this.is_holding.direction = false;
+		}
 	}
-		 
-		 
-	releaseUp () {
-		this.is_holding.up		= false;
-		 if (this.is_holding.down)
-		 {
-			 this.is_holding.direction = 'down';	
-		 }
-		 else 
-		 {
-			 this.is_holding.direction =	false;
-		 }
+
+
+	releaseUp() {
+		this.is_holding.up = false;
+		if (this.is_holding.down) {
+			this.is_holding.direction = 'down';
+		}
+		else {
+			this.is_holding.direction = false;
+		}
 	}
 
 	createMap() {
@@ -676,7 +668,7 @@ class WorldScene extends MultiplayerScene {
 
 		this.anims.create({
 			key: 'idle',
-			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 0, end: 3}),
+			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 0, end: 3 }),
 			frameRate: 0.5,
 			repeat: -1
 		});
@@ -685,7 +677,7 @@ class WorldScene extends MultiplayerScene {
 
 
 	createPlayer(playerInfo) {
-		this.player = this.add.sprite(this.x, this.y, 'LCDTyp');
+		this.player = this.add.sprite(0, 0, 'LCDTyp');
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
 		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
@@ -714,7 +706,7 @@ class WorldScene extends MultiplayerScene {
 			this.events.emit('showImposter');
 		}
 	}
-	
+
 
 	//Erzeugen der Kamera
 	updateCamera() {
@@ -732,8 +724,8 @@ class WorldScene extends MultiplayerScene {
 			[547, 425],
 			[748, 425],
 		];
-		
-		
+
+
 
 		this.stations = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
 		for (var i = 0; i < stationCoord.length; i++) {
@@ -786,7 +778,7 @@ class WorldScene extends MultiplayerScene {
 		if (this.container) {
 			this.container.body.setVelocity(0);
 
-			if (this.scene.isActive('BattleScene')) {
+			if (this.scene.isActive(this.currentBattle)) {
 				return
 			}
 
@@ -818,37 +810,33 @@ class WorldScene extends MultiplayerScene {
 				this.player.anims.play('down', true);
 			}
 
-			
+
 			//Move Player sideways in mobile
-			if (this.is_holding.direction === 'left')
-			{
+			if (this.is_holding.direction === 'left') {
 				this.container.body.setVelocityX(-50);
 				this.player.anims.play('left', true);
 			}
-			else if (this.is_holding.direction === 'right')
-			{
+			else if (this.is_holding.direction === 'right') {
 				this.container.body.setVelocityX(50);
 				this.player.anims.play('right', true);
 			}
-			
+
 			//Move Player vertically in mobile
-			
-			if (this.is_holding.direction === 'up')
-			{
+
+			if (this.is_holding.direction === 'up') {
 				this.player.anims.play('up', true);
 				this.container.body.setVelocityY(-50);
-				
+
 			}
-			else if (this.is_holding.direction === 'down')
-			{
+			else if (this.is_holding.direction === 'down') {
 				this.container.body.setVelocityY(50);
 				this.player.anims.play('down', true);
 			}
-						
+
 
 			// emit player movement
 			this.emitPlayerMovement()
-			
+
 
 			// IMPOSTER
 			if (this.socket.id == this.state.virusID) {
@@ -1048,23 +1036,53 @@ class VoteScene extends Phaser.Scene {
 	// receive player data
 	init(data) {
 		this.socket = data.socket;
-		this.players = data.players;
+		this.state = data.state;
+		this.playersData = data.players;
+
+		this.voteSended = false;
 	}
 
 	create() {
 
-		this.cameras.main.setBackgroundColor('rgba(0, 0, 0, 0.5)');
+		this.cameras.main.setBackgroundColor('rgba(123, 0, 0, 1)');
+
+		initBoxes(this, COLORS.UI_BOX, COLORS.UI_BOX_BORDER);
 
 		this.createPlayers();
 
 		this.createGameIO();
 	}
 
-	createPlayer() {
+	createPlayers() {
+
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fintStyle: "bold", align: "center" };
+
 		// render all players
+		const noPlayers = Object.keys(this.playersData).length;
+		var i = 1;
 
-		// make them interactive		
+		var x = 0;
+		var y = 0;
+		for (const id in this.playersData) {
 
+			[x, y] = getDisplayPosition(this, i, noPlayers);
+
+			var player = this.add.sprite(x, y, 'LCDTyp');
+			player.setScale(.3);
+			player.setSize(16, 32);
+			player.setTint(COLORS.PLAYER[this.playersData[id].colorId]);
+
+			[x, y] = createTextField(this, x, y + 24, 50, 24);
+			this.abortButton = this.add.text(x, y, "Vote", textStyle);
+			this.abortButton.setOrigin(0.5);
+			this.abortButton.setInteractive();
+
+			this.abortButton.on("pointerdown", () => {
+				this.sendVote(i);
+			});
+
+			i += 1;
+		}
 	}
 
 	createGameIO() {
@@ -1073,6 +1091,13 @@ class VoteScene extends Phaser.Scene {
 		// receive result
 
 		// Show win or return to main game
+	}
+
+	sendVote(id) {
+		if (!this.voteSended) {
+			this.socket.emit('vote', { vote: id, roomKey: this.state.roomKey });
+			this.voteSended = true;
+		}
 	}
 
 	return2Game() {
@@ -1585,24 +1610,31 @@ class TaskSceneOrder extends TaskScene {
 	}
 }
 
-/*
-function getDisplayPosition(posCount, maxCount, this) {
+function getDisplayPosition(scene, posCount, maxCount) {
 
-	var maxConsInRow = 3;
-	if ((maxCount - posCount < maxConsInRow)) {
-		maxConsInRow = maxCount - posCount;
+	var maxConsInRow = 4;
+	const noRows = Math.ceil(maxCount / maxConsInRow);
+	console.log(maxConsInRow, posCount, maxCount)
+
+	if (posCount > (maxCount - maxConsInRow)) {
+		maxConsInRow = maxCount % maxConsInRow;
+		console.log(maxConsInRow)
 	}
 
 	const borderWidth = 50;
-	const rowDist = 30;
-	const boxWidth = 50;
-	const boxHeight = 50;
-	const boxGap = (this.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow - 1);
+	const boxWidth = 16;
+	const boxHeight = 32;
+	const boxGap = (scene.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow + 1);
+	const rowDist = (scene.physics.world.bounds.height - 2 * borderWidth - noRows * boxHeight) / (noRows + 1);
+	console.log(boxGap, rowDist)
 
-	var x = borderWidth + boxWidth / 2 + (posCount % maxConsInRow) * (boxWidth + boxGap);
-	var y = this.physics.world.bounds.height / 2 + (Math.ceil((posCount + 1) / maxConsInRow) - 1) * (boxHeight + rowDist);
-	return [x, y];
-}*/
+	var x = borderWidth + boxWidth / 2 + ((posCount - 1 % maxConsInRow)) * (boxWidth + boxGap);
+	//let y = scene.physics.world.bounds.height / 2 + (Math.ceil((posCount + 1) / maxConsInRow) - 1) * (boxHeight + rowDist);
+	var y = borderWidth + boxHeight / 2 + (Math.ceil(posCount / maxConsInRow)-1) * (boxHeight + rowDist);
+	console.log(x, y)
+
+	return [x, y]
+}
 
 // load game configuration file from server
 function loadFile(filePath) {
