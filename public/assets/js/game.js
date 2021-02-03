@@ -223,7 +223,7 @@ class StartScene extends Phaser.Scene {
 		const titlePosX = 20;
 		const titlePosY = 10;
 
-		const titleLine1 = this.add.text(titlePosX, titlePosY, "A hidden", { fontFamily: "Arial Black", fontSize: 32 });
+		const titleLine1 = this.add.text(titlePosX, titlePosY, " THE V!RUS", { fontFamily: "Arial Black", fontSize: 36 });
 		titleLine1.setStroke('#000000', 4);
 		const gradient = titleLine1.context.createLinearGradient(0, 0, 0, titleLine1.height);
 
@@ -234,7 +234,7 @@ class StartScene extends Phaser.Scene {
 
 		titleLine1.setFill(gradient);
 
-		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "V!rUS", { fontFamily: "Arial Black", fontSize: 32 });
+		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "  AMONG US", { fontFamily: "Arial Black", fontSize: 28 });
 		titleLine2.setStroke('#000000', 4);
 		titleLine2.setFill(gradient);
 	}
