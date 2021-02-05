@@ -118,7 +118,7 @@ io.on('connection', function(socket) {
 			io.in(roomKey).emit('gameFinish', true)
 		}
 	});
-	
+
 	// virus kills
 	socket.on('reportKill', function(data) {
 		io.in(data.roomKey).emit('startVote', gameRooms[data.roomKey].players)
@@ -134,18 +134,49 @@ io.on('connection', function(socket) {
 		console.log(data)
 
 		gameRooms[data.roomKey].players[socket.id].vote = data.vote;
-		var allVoted = Object.values(gameRooms[roomKey].vote).reduce((a, item) => a && item, true);
+
+		var allVoted = true;
+		console.log(gameRooms[data.roomKey].players)
+		console.log("check votes")
+
+		var players = Object.values(gameRooms[data.roomKey].players);
+		for (let p of players) {
+			console.log(p)
+			if (p.vote < 0) {
+				allVoted = false;
+				break
+			}
+		}
+		console.log(allVoted)
 
 		if (allVoted) {
+			console.log("all have voted")
 			// count votes
-			var votedNum = 1;
-			
-			// send to all clients
-			io.in(roomKey).emit('voteKill', {
-				voteNum
-			});
-			
-			// reset votes
+			var voteCount = [];
+			var noVotes = gameRooms[data.roomKey].noPlayers;
+			// Init array 
+			while (noVotes--) voteCount[noVotes] = 0;
+
+			for (let p of players) {
+				voteCount[p.vote - 1] += 1;
+			}
+
+			var votedPlayerNum = voteCount.indexOf(Math.max(...voteCount)) + 1;
+			console.log(voteCount)
+			console.log("max votes for", votedPlayerNum)
+
+			for (let p of players) {
+				if (p.colorId == votedPlayerNum) {
+					// send to all clients
+					console.log(p.playerId)
+					io.in(data.roomKey).emit('voteKill', {
+						playerId: p.playerId
+					});
+
+				}
+				// reset votes
+				p.vote = -1;
+			}
 		}
 	});
 
@@ -235,6 +266,7 @@ function keyGenerator() {
 	for (let i = 0; i < 4; i++) {
 		code += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
+	code = "test";
 	return code;
 }
 

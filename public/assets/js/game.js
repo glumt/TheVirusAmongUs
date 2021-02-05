@@ -1058,6 +1058,15 @@ class VoteScene extends Phaser.Scene {
 		const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fintStyle: "bold", align: "center" };
 
 		// render all players
+		this.buttons = this.physics.add.group({ classType: Phaser.GameObjects.Text });
+		// zone for mouse click to activate overlap function (i have no fucking idea how to solve this otherwise)
+		this.hitZone = this.add.zone(10, 10).setSize(10, 10);
+		this.physics.world.enable(this.hitZone);
+
+		this.input.on('pointerdown', (pointer) => {
+			this.moveZone(pointer);
+		});
+
 		const noPlayers = Object.keys(this.playersData).length;
 		var i = 1;
 
@@ -1072,37 +1081,52 @@ class VoteScene extends Phaser.Scene {
 			player.setSize(16, 32);
 			player.setTint(COLORS.PLAYER[this.playersData[id].colorId]);
 
-			[x, y] = createTextField(this, x, y + 24, 50, 24);
-			this.abortButton = this.add.text(x, y, "Vote", textStyle);
-			this.abortButton.setOrigin(0.5);
-			this.abortButton.setInteractive();
+			[x, y] = createTextField(this, x + 25, y + 24, 50, 24);
 
-			this.abortButton.on("pointerdown", () => {
-				this.sendVote(i);
-			});
+			var btn = this.buttons.create(x, y, "Vote", textStyle);
+			btn.setOrigin(0.5);
 
 			i += 1;
 		}
+
+		// assign unqiue task name to each station
+		var btns = this.buttons.getChildren();
+		for (var i = 0; i < btns.length; i++) {
+			btns[i].setDataEnabled();
+			btns[i].setData("voteNumber", i + 1);
+		}
+
+		this.physics.add.overlap(this.buttons, this.hitZone, this.sendVote, false, this);
 	}
 
 	createGameIO() {
-		// Send vote
-
 		// receive result
-
-		// Show win or return to main game
+		this.socket.on("voteKill", (voteId) => {
+				this.scene.stop('VoteScene');
+			if (this.state.virusID == voteId) {
+				// win
+				this.scene.resume('EndScene');
+			} else {
+				// emit vote and continue game
+				this.socket.emit('killPlayer', { playerId: voteId, roomKey: this.state.roomKey });
+				this.scene.resume('WorldScene');
+			}
+		});
 	}
 
-	sendVote(id) {
+	moveZone(pointer) {
+		this.hitZone.setPosition(pointer.position.x, pointer.position.y);
+	}
+
+	sendVote(btn, hitZone) {
 		if (!this.voteSended) {
-			this.socket.emit('vote', { vote: id, roomKey: this.state.roomKey });
+			console.log("hit")
+			console.log("Button", btn)
+			console.log("hit Zone", hitZone.getData("voteNumber"))
+			// dont know why the voteNUmber is in the hitZone
+			this.socket.emit('vote', { vote: hitZone.getData("voteNumber"), roomKey: this.state.roomKey });
 			this.voteSended = true;
 		}
-	}
-
-	return2Game() {
-		this.scene.stop('VoteScene');
-		this.scene.resume('WorldScene');
 	}
 }
 
@@ -1630,7 +1654,7 @@ function getDisplayPosition(scene, posCount, maxCount) {
 
 	var x = borderWidth + boxWidth / 2 + ((posCount - 1 % maxConsInRow)) * (boxWidth + boxGap);
 	//let y = scene.physics.world.bounds.height / 2 + (Math.ceil((posCount + 1) / maxConsInRow) - 1) * (boxHeight + rowDist);
-	var y = borderWidth + boxHeight / 2 + (Math.ceil(posCount / maxConsInRow)-1) * (boxHeight + rowDist);
+	var y = borderWidth + boxHeight / 2 + (Math.ceil(posCount / maxConsInRow) - 1) * (boxHeight + rowDist);
 	console.log(x, y)
 
 	return [x, y]
