@@ -450,10 +450,12 @@ class WorldScene extends MultiplayerScene {
 			console.log("game is finished", data)
 			if (data) {
 				// Defender win all tasks done
-
+				this.scene.stop('WorldScene');
+				this.scene.start('PCWinsScene');
 			} else {
 				// Imposter kills everyone
-
+				this.scene.stop('WorldScene');
+				this.scene.start('VirusWinsScene');
 			}
 		});
 
@@ -1773,7 +1775,6 @@ class PCWinsScene extends Phaser.Scene {
 	constructor() {
 		super({
 			key: 'PCWinsScene',
-			active: true
 		});
 	}
 	create() {	
@@ -1785,7 +1786,6 @@ class VirusWinsScene extends Phaser.Scene {
 	constructor() {
 		super({
 			key: 'VirusWinsScene',
-			active: true
 		});
 	}
 	create() {	
