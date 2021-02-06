@@ -507,6 +507,12 @@ class WorldScene extends MultiplayerScene {
 		this.zone_down.setDepth(2);
 		this.zone_down.setScrollFactor(0);
 
+		this.zone_space = this.add.zone(250, 250, 100, 100);
+		this.zone_space.setOrigin(0.0);
+		this.zone_space.setDepth(2);
+		this.zone_space.setScrollFactor(0);
+		
+	
 
 
 		// Add input callback
@@ -529,6 +535,8 @@ class WorldScene extends MultiplayerScene {
 		this.zone_down.on('pointerdown', () => { this.goDown(); });
 		this.zone_down.on('pointerup', () => { this.releaseDown(); });
 		this.zone_down.on('pointerout', () => { this.releaseDown(); });
+		
+	
 
 
 	}
@@ -551,6 +559,12 @@ class WorldScene extends MultiplayerScene {
 	goDown() {
 		this.is_holding.down = true;
 		this.is_holding.direction = 'down';
+	}
+	
+	goSpace() {
+		this.is_holding.space = true;
+		this.is_holding.direction = 'space';
+		console.log('goSpace');
 	}
 
 
@@ -595,6 +609,12 @@ class WorldScene extends MultiplayerScene {
 		else {
 			this.is_holding.direction = false;
 		}
+	}
+	
+	releaseSpace() {
+		this.is_holding.space = false;
+		console.log('releaseSpace');
+		
 	}
 
 	createMap() {
@@ -712,7 +732,7 @@ class WorldScene extends MultiplayerScene {
 	updateCamera() {
 		this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 		this.cameras.main.startFollow(this.container);
-		this.cameras.main.roundPixels = true;
+		//this.cameras.main.roundPixels = true;
 	}
 
 	createStations() {
@@ -775,13 +795,18 @@ class WorldScene extends MultiplayerScene {
 
 	//fortlaufende Aktualisierungen
 	update() {
+		
+	
+		
+		
 		if (this.container) {
 			this.container.body.setVelocity(0);
 
 			if (this.scene.isActive(this.currentBattle)) {
 				return
 			}
-
+			
+	
 			// Horizontal movement
 			if (this.cursors.left.isDown) {
 				this.container.body.setVelocityX(-50);
@@ -832,7 +857,11 @@ class WorldScene extends MultiplayerScene {
 				this.container.body.setVelocityY(50);
 				this.player.anims.play('down', true);
 			}
-
+			
+			
+				
+				
+				
 
 			// emit player movement
 			this.emitPlayerMovement()
