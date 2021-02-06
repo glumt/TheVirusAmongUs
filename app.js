@@ -83,7 +83,6 @@ io.on('connection', function(socket) {
 		console.log(gameRooms[roomKey].ready)
 		var allReady = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
 
-
 		if (allReady) {
 			// send to all clients
 			virusID = Math.floor(Math.random() * gameRooms[roomKey].noPlayers)
@@ -91,6 +90,7 @@ io.on('connection', function(socket) {
 				players: gameRooms[roomKey].players,
 				virusID: Object.keys(gameRooms[roomKey].players)[virusID]
 			});
+			gameRooms[roomKey].virusID = virusID;
 		}
 	});
 
@@ -125,6 +125,7 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('killPlayer', function(data) {
+		console.log(data)
 		gameRooms[data.roomKey].players[data.playerId].alive = false;
 		io.in(data.roomKey).emit('deactivatePlayer', data.playerId)
 	});
