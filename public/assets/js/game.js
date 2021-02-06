@@ -220,10 +220,11 @@ class StartScene extends Phaser.Scene {
 
 
 		// Game Title
-		const titlePosX = 20;
-		const titlePosY = 10;
+		const titlePosX = this.physics.world.bounds.width / 2;
+		const titlePosY = 30;
 
-		const titleLine1 = this.add.text(titlePosX, titlePosY, " THE V!RUS", { fontFamily: "Arial Black", fontSize: 36 });
+		const titleLine1 = this.add.text(titlePosX, titlePosY, "THE V!RUS", { fontFamily: "Arial Black", fontSize: 36 });
+		titleLine1.setOrigin(0.5);
 		titleLine1.setStroke('#000000', 4);
 		const gradient = titleLine1.context.createLinearGradient(0, 0, 0, titleLine1.height);
 
@@ -234,7 +235,8 @@ class StartScene extends Phaser.Scene {
 
 		titleLine1.setFill(gradient);
 
-		const titleLine2 = this.add.text(titlePosX + 10, titlePosY + 35, "  AMONG US", { fontFamily: "Arial Black", fontSize: 28 });
+		const titleLine2 = this.add.text(titlePosX, titlePosY + 35, "AMONG US", { fontFamily: "Arial Black", fontSize: 28 });
+		titleLine2.setOrigin(0.5);
 		titleLine2.setStroke('#000000', 4);
 		titleLine2.setFill(gradient);
 	}
@@ -279,15 +281,6 @@ class LobbyScene extends MultiplayerScene {
 
 		initBoxes(this, COLORS.MAIN_BOX, COLORS.MAIN_BOX_BORDER);
 
-		const textStyle = { color: COLORS.UI_TEXT, fontSize: "18px", fintStyle: "bold", align: "center" };
-		var inX, inY = 0;
-
-		[inX, inY] = createTextField(this, 315, this.UIBoxBound, 310, 65);
-		this.startText = this.add.text(inX, inY, "Start the Game!", textStyle);
-		this.startText.setOrigin(0.5);
-		this.startText.setInteractive({ useHandCursor: true });
-		this.startText.on('pointerdown', () => this.emitReady());
-
 		this.socket.on("setState", (state) => {
 			this.state = state;
 		});
@@ -325,8 +318,21 @@ class LobbyScene extends MultiplayerScene {
 
 		this.container.body.setBounce(1);
 		this.container.body.setCollideWorldBounds(true);
+
+		// create start button when player is ready
+		this.createStartButton();
 	}
 
+	createStartButton() {
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "18px", fintStyle: "bold", align: "center" };
+		var inX, inY = 0;
+
+		[inX, inY] = createTextField(this, 315, this.UIBoxBound, 310, 65);
+		this.startText = this.add.text(inX, inY, "Start the Game!", textStyle);
+		this.startText.setOrigin(0.5);
+		this.startText.setInteractive({ useHandCursor: true });
+		this.startText.on('pointerdown', () => this.emitReady());
+	}
 
 	update(time, delta) {
 		if (this.container) {
@@ -916,7 +922,6 @@ class UIScene extends Phaser.Scene {
 		this.completedTasks = 0;
 	}
 
-
 	create() {
 		initBoxes(this, COLORS.UI_BOX, COLORS.UI_BOX_BORDER);
 
@@ -970,8 +975,6 @@ class UIScene extends Phaser.Scene {
 			this.reportBox.setVisible(false)
 			this.reportText.setVisible(false)
 		});
-
-
 	}
 
 	createKillNotification() {
@@ -1072,16 +1075,20 @@ class VoteScene extends Phaser.Scene {
 
 		var x = 0;
 		var y = 0;
+		const buttonWidth = 40;
+		const buttonHeight = 18;
 		for (const id in this.playersData) {
 
 			[x, y] = getDisplayPosition(this, i, noPlayers);
 
-			var player = this.add.sprite(x, y, 'LCDTyp');
+			var player = this.add.sprite(0, 0, 'LCDTyp');
+			player.setOrigin(0.5);
+			player.setPosition(x,y);
 			player.setScale(.3);
 			player.setSize(16, 32);
 			player.setTint(COLORS.PLAYER[this.playersData[id].colorId]);
 
-			[x, y] = createTextField(this, x + 25, y + 24, 50, 24);
+			[x, y] = createTextField(this, x + buttonWidth/2, y + buttonHeight, buttonWidth, buttonHeight);
 
 			var btn = this.buttons.create(x, y, "Vote", textStyle);
 			btn.setOrigin(0.5);
@@ -1101,14 +1108,14 @@ class VoteScene extends Phaser.Scene {
 
 	createGameIO() {
 		// receive result
-		this.socket.on("voteKill", (voteId) => {
-				this.scene.stop('VoteScene');
-			if (this.state.virusID == voteId) {
+		this.socket.on("voteKill", (vote) => {
+			this.scene.stop('VoteScene');
+			if (this.state.virusID == vote.playerId) {
 				// win
 				this.scene.resume('EndScene');
 			} else {
 				// emit vote and continue game
-				this.socket.emit('killPlayer', { playerId: voteId, roomKey: this.state.roomKey });
+				this.socket.emit('killPlayer', { playerId: vote.playerId, roomKey: this.state.roomKey });
 				this.scene.resume('WorldScene');
 			}
 		});
@@ -1636,26 +1643,42 @@ class TaskSceneOrder extends TaskScene {
 
 function getDisplayPosition(scene, posCount, maxCount) {
 
+	console.log("input: ", posCount, maxCount)
+
 	var maxConsInRow = 4;
-	const noRows = Math.ceil(maxCount / maxConsInRow);
-	console.log(maxConsInRow, posCount, maxCount)
 
-	if (posCount > (maxCount - maxConsInRow)) {
-		maxConsInRow = maxCount % maxConsInRow;
-		console.log(maxConsInRow)
-	}
+	const col = ((posCount - 1) % maxConsInRow) + 1;
+	const row = Math.ceil(posCount / maxConsInRow);
 
-	const borderWidth = 50;
+	const noRows = Math.max(Math.ceil(maxCount / maxConsInRow), 1);
+
+	const borderWidth = 40;
 	const boxWidth = 16;
 	const boxHeight = 32;
-	const boxGap = (scene.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow + 1);
+
+	/*
+		if (noRows > 1) {
+			const rowDist = (scene.physics.world.bounds.height - 2 * borderWidth - noRows * boxHeight) / (noRows + 1);
+		} else {
+			const rowDist = scene.physics.world.bounds.height - 2;
+		}
+		*/
 	const rowDist = (scene.physics.world.bounds.height - 2 * borderWidth - noRows * boxHeight) / (noRows + 1);
+
+	if ((row) == noRows) {
+		console.log(posCount, maxCount - maxConsInRow, maxConsInRow)
+		maxConsInRow = Math.max(maxCount % maxConsInRow, 1);
+	}
+
+	const boxGap = (scene.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow + 1);
+
 	console.log(boxGap, rowDist)
 
-	var x = borderWidth + boxWidth / 2 + ((posCount - 1 % maxConsInRow)) * (boxWidth + boxGap);
+	var x = borderWidth - boxWidth / 2 + col * (boxWidth + boxGap);
 	//let y = scene.physics.world.bounds.height / 2 + (Math.ceil((posCount + 1) / maxConsInRow) - 1) * (boxHeight + rowDist);
-	var y = borderWidth + boxHeight / 2 + (Math.ceil(posCount / maxConsInRow) - 1) * (boxHeight + rowDist);
-	console.log(x, y)
+	var y = borderWidth - boxHeight / 2 + row * (boxHeight + rowDist);
+
+	console.log("output: ", posCount, row, col, x, y)
 
 	return [x, y]
 }
