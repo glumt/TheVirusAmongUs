@@ -7,14 +7,14 @@ const COLORS = {
 	UI_BOX: Phaser.Display.Color.GetColor(0, 158, 171),
 	UI_BOX_BORDER: Phaser.Display.Color.GetColor(230, 230, 230),
 	PLAYER: {
-		1: Phaser.Display.Color.GetColor(230, 0, 0),
-		2: Phaser.Display.Color.GetColor(0, 230, 0),
-		3: Phaser.Display.Color.GetColor(0, 0, 230),
-		4: Phaser.Display.Color.GetColor(230, 230, 230),
-		5: Phaser.Display.Color.GetColor(230, 230, 230),
-		6: Phaser.Display.Color.GetColor(230, 230, 230),
-		7: Phaser.Display.Color.GetColor(230, 230, 230),
-		8: Phaser.Display.Color.GetColor(230, 230, 230),
+		1: Phaser.Display.Color.GetColor(255, 15, 0),  		//Rot
+		2: Phaser.Display.Color.GetColor(1, 82, 254),		//Blau
+		3: Phaser.Display.Color.GetColor(112, 255, 0),  	//Grün 
+		4: Phaser.Display.Color.GetColor(254, 173, 1),		//Gelb
+		5: Phaser.Display.Color.GetColor(254, 1, 209),		//Rosa
+		6: Phaser.Display.Color.GetColor(0, 240, 255), 		//Türkis
+		7: Phaser.Display.Color.GetColor(143, 0, 255), 		//Lila
+		8: Phaser.Display.Color.GetColor(34, 33, 35),		//schwarz
 	}
 };
 
@@ -28,6 +28,7 @@ class BootScene extends Phaser.Scene {
 	}
 
 	preload() {
+		this.load.spritesheet('psu', 'assets/spritesheet/psuSheet.png',{ frameWidth: 128, frameHeight: 128 });
 		this.load.tilemapTiledJSON('map', 'assets/backgrounds/map.json');
 		this.load.image('floorSheet', 'assets/spritesheet/floorSheet.png');
 		this.load.image('wallSheet', 'assets/spritesheet/wallSheetE.png');
@@ -45,11 +46,10 @@ class BootScene extends Phaser.Scene {
 		this.load.image('stationSix', 'assets/sprites/six.png');
 		this.load.image('PCWins', 'assets/sprites/PCWins.png');
 		this.load.image('VirusWins','assets/sprites/VirusWins.png');
-
-
 		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
-
 		this.load.image('lobby', 'assets/backgrounds/lobby.png');
+		this.load.spritesheet('gpu', 'assets/spritesheet/gpuSheet.png',{ frameWidth: 192, frameHeight: 96 });
+		
 	}
 
 	create() {
@@ -409,6 +409,16 @@ class WorldScene extends MultiplayerScene {
 
 		// user input
 		this.cursors = this.input.keyboard.createCursorKeys();
+		
+		//animted Objects
+		this.gpu = this.add.sprite(240,464,1,2,'gpu');
+		this.gpu.play('gpu');
+		this.psu = this.add.sprite(144,160,'psu');
+		this.psu.play('psu');
+		this.psu.setDepth(+2);
+		
+		
+		
 
 		//
 
@@ -571,11 +581,6 @@ class WorldScene extends MultiplayerScene {
 		this.is_holding.direction = 'down';
 	}
 	
-	goSpace() {
-		this.is_holding.space = true;
-		this.is_holding.direction = 'space';
-		console.log('goSpace');
-	}
 
 
 
@@ -658,7 +663,8 @@ class WorldScene extends MultiplayerScene {
 		this.physics.world.bounds.width = this.map.widthInPixels;
 		this.physics.world.bounds.height = this.map.heightInPixels;
 
-		this.sprite = this.add.sprite(155, 212, 'stationOne');
+		this.station1 = this.add.sprite(155, 212, 'stationOne');
+		this.station1.setDepth(+3);
 		this.sprite = this.add.sprite(420, 140, 'stationTwo');
 		this.sprite = this.add.sprite(748, 57, 'stationThree');
 		this.sprite = this.add.sprite(135, 425, 'stationFour');
@@ -667,7 +673,25 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	createAnimations() {
-		//Erzeugen der Animation 
+		
+		
+		//Erzeugen der Objekt-Animation
+		this.anims.create({
+			key: 'gpu',
+			frames: this.anims.generateFrameNumbers('gpu', { start: 0, end: 3 }),
+			frameRate: 30,
+			repeat: -1
+		});
+		
+		this.anims.create({
+			key: 'psu',
+			frames: this.anims.generateFrameNumbers('psu', { start: 0, end: 4 }),
+			frameRate: 40,
+			repeat: -1
+		});
+		
+		
+		//Erzeugen der Spieler-Animation 
 		this.anims.create({
 			key: 'left',
 			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 23, end: 27 }),
@@ -712,10 +736,12 @@ class WorldScene extends MultiplayerScene {
 		this.player.setSize(16, 32);
 		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
 		this.player.colorId = playerInfo.colorId;
+		
 
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(16, 32);
 		this.container.add(this.player);
+		this.container.setDepth(+3);
 		this.physics.world.enable(this.container);
 
 		// update camera
@@ -1770,7 +1796,7 @@ class PCWinsScene extends Phaser.Scene {
 	constructor() {
 		super({
 			key: 'PCWinsScene',
-			active: true
+			
 		});
 	}
 	create() {	
@@ -1782,20 +1808,13 @@ class VirusWinsScene extends Phaser.Scene {
 	constructor() {
 		super({
 			key: 'VirusWinsScene',
-			active: true
+			
 		});
 	}
 	create() {	
 	this.add.image(160, 120, 'VirusWins');	
 	}	
 }
-
-
-
-
-
-
-
 
 
 var gameScenes = [
@@ -1825,7 +1844,7 @@ var config = {
 		default: 'arcade',
 		arcade: {
 			gravity: { y: 0 },
-			debug: true
+			debug: false
 		}
 	},
 	dom: {
