@@ -23,7 +23,7 @@ class BootScene extends Phaser.Scene {
 	constructor() {
 		super({
 			key: 'BootScene',
-			active: true
+			active: true,
 		});
 	}
 
@@ -43,6 +43,8 @@ class BootScene extends Phaser.Scene {
 		this.load.image('stationFour', 'assets/sprites/four.png');
 		this.load.image('stationFive', 'assets/sprites/five.png');
 		this.load.image('stationSix', 'assets/sprites/six.png');
+		this.load.image('PCWins', 'assets/sprites/PCWins.png');
+		this.load.image('VirusWins','assets/sprites/VirusWins.png');
 
 
 		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
@@ -1764,13 +1766,49 @@ for (const task in gameData) {
 
 const NO_TASKS = taskCounter - 1;
 
+class PCWinsScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'PCWinsScene',
+			active: true
+		});
+	}
+	create() {	
+	this.add.image(160, 120, 'PCWins');	
+	}	
+}
+
+class VirusWinsScene extends Phaser.Scene {
+	constructor() {
+		super({
+			key: 'VirusWinsScene',
+			active: true
+		});
+	}
+	create() {	
+	this.add.image(160, 120, 'VirusWins');	
+	}	
+}
+
+
+
+
+
+
+
+
+
 var gameScenes = [
+	
 	BootScene,
 	StartScene,
 	LobbyScene,
 	WorldScene,
 	UIScene,
-	VoteScene
+	VoteScene,
+	PCWinsScene,
+	VirusWinsScene,
+	
 ];
 
 allScenes = gameScenes.concat(taskScenes);
