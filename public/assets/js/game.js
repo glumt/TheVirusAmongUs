@@ -457,6 +457,7 @@ class WorldScene extends MultiplayerScene {
 			var cId = 0;
 
 			// Set killed player invisible
+			// this is stupid just select the player by id 
 			for (var i = 0; i < this.otherPlayers.getLength(); i++) {
 				if (otherPlayers[i].playerId != playerId) {
 					continue
@@ -484,6 +485,7 @@ class WorldScene extends MultiplayerScene {
 			deadPlayer.setScale(.3);
 			deadPlayer.setSize(16, 32);
 			deadPlayer.setTint(COLORS.PLAYER[cId])
+			deadPlayer.playerId = playerId;
 			this.deadPlayers.add(deadPlayer)
 
 			this.emitKill = false;
@@ -769,8 +771,14 @@ class WorldScene extends MultiplayerScene {
 		}
 	}
 
-	reportDeadPlayer(player, zone) {
+	reportDeadPlayer(player, deadPlayer) {
+		// no report for virus
 		if (this.socket.id == this.state.virusID) {
+			return
+		}
+
+		// no report for the dead player self
+		if (this.socket.id == deadPlayer.playerId) {
 			return
 		}
 
@@ -880,34 +888,35 @@ class WorldScene extends MultiplayerScene {
 					this.emitKill = false;
 				}
 			} else {// DEFENDER
-				var deadPlayers = this.deadPlayers.getChildren();
-				var x = this.container.x;
-				var y = this.container.y;
-				var playerClose = false;
+				if (this.playerIsAlive) {
 
-				for (var i = 0; i < deadPlayers.length; i++) {
+					var deadPlayers = this.deadPlayers.getChildren();
+					var x = this.container.x;
+					var y = this.container.y;
+					var playerClose = false;
 
-					var dx = (x - deadPlayers[i].x);
-					var dy = (y - deadPlayers[i].y);
+					for (var i = 0; i < deadPlayers.length; i++) {
 
-					var distance = Math.sqrt(dx * dx + dy * dy)
-					if (distance < 10.0) {
-						this.events.emit('enableReport');
-						playerClose = true;
-						this.emitReport = true;
-						break
-					} else {
-						this.events.emit('disableReport');
+						var dx = (x - deadPlayers[i].x);
+						var dy = (y - deadPlayers[i].y);
+
+						var distance = Math.sqrt(dx * dx + dy * dy)
+						if (distance < 10.0) {
+							this.events.emit('enableReport');
+							playerClose = true;
+							this.emitReport = true;
+							break
+						} else {
+							this.events.emit('disableReport');
+						}
+					}
+
+					if (this.cursors.space.isDown && playerClose && this.emitReport) {
+						this.emitReport = false;
 					}
 				}
-
-				if (this.cursors.space.isDown && playerClose && this.emitReport) {
-					this.emitReport = false;
-				}
-
 			}
 		}
-
 	}
 }
 
@@ -1083,12 +1092,12 @@ class VoteScene extends Phaser.Scene {
 
 			var player = this.add.sprite(0, 0, 'LCDTyp');
 			player.setOrigin(0.5);
-			player.setPosition(x,y);
+			player.setPosition(x, y);
 			player.setScale(.3);
 			player.setSize(16, 32);
 			player.setTint(COLORS.PLAYER[this.playersData[id].colorId]);
 
-			[x, y] = createTextField(this, x + buttonWidth/2, y + buttonHeight, buttonWidth, buttonHeight);
+			[x, y] = createTextField(this, x + buttonWidth / 2, y + buttonHeight, buttonWidth, buttonHeight);
 
 			var btn = this.buttons.create(x, y, "Vote", textStyle);
 			btn.setOrigin(0.5);
