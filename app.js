@@ -19,11 +19,14 @@ const io = require('socket.io')(server);
 var gameRooms = {
 }
 
+const noTasksPerPlayer = 5;
+
 io.on('connection', function(socket) {
 	console.log('a user connected: ', socket.id);
 
 	// Waiting room communication
 	socket.on("isKeyValid", function(input) {
+		console.log(input)
 		const keyArray = Object.keys(gameRooms)
 			? socket.emit("keyIsValid", input)
 			: socket.emit("keyNotValid");
@@ -80,17 +83,20 @@ io.on('connection', function(socket) {
 	socket.on('playerReady', function(roomKey) {
 
 		gameRooms[roomKey].ready[socket.id] = true;
-		console.log(gameRooms[roomKey].ready)
 		var allReady = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
 
 		if (allReady) {
-			// send to all clients
-			virusID = Math.floor(Math.random() * gameRooms[roomKey].noPlayers)
+			// start the game on all clients
+			const virusID = Math.floor(Math.random() * gameRooms[roomKey].noPlayers)
+
+			gameRooms[roomKey].virusSocketId = Object.keys(gameRooms[roomKey].players)[virusID];
+			gameRooms[roomKey].noTasks = (gameRooms[roomKey].noPlayers - 1) * noTasksPerPlayer;
+
 			io.in(roomKey).emit('startGame', {
 				players: gameRooms[roomKey].players,
-				virusID: Object.keys(gameRooms[roomKey].players)[virusID]
+				virusID: Object.keys(gameRooms[roomKey].players)[virusID],
+				noTasks: gameRooms[roomKey].noTasks
 			});
-			gameRooms[roomKey].virusID = virusID;
 		}
 	});
 
@@ -125,9 +131,26 @@ io.on('connection', function(socket) {
 	});
 
 	socket.on('killPlayer', function(data) {
-		console.log(data)
 		gameRooms[data.roomKey].players[data.playerId].alive = false;
 		io.in(data.roomKey).emit('deactivatePlayer', data.playerId)
+
+		// check if all players (except virus) are dead
+		var allPlayerDead = true;
+		var players = Object.values(gameRooms[data.roomKey].players);
+		for (let p of players) {
+			if (p.playerId == gameRooms[data.roomKey].virusSocketId) {
+				continue
+			}
+			if (p.alive) {
+				allPlayerDead = false;
+				break
+			}
+		}
+
+		// finish the game
+		if (allPlayerDead) {
+			io.in(data.roomKey).emit('gameFinish', false)
+		}
 	});
 
 	// Voting
@@ -267,7 +290,6 @@ function keyGenerator() {
 	for (let i = 0; i < 4; i++) {
 		code += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
-	code = "test";
 	return code;
 }
 
