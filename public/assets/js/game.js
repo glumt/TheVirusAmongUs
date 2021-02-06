@@ -109,7 +109,7 @@ class MultiplayerScene extends Phaser.Scene {
 			// start UI scene
 			this.scene.launch("UIScene");
 			// start Game
-			this.scene.start('WorldScene', { socket: this.socket, players: gameInfo.players, state: this.state })
+			this.scene.start('WorldScene', { socket: this.socket, players: gameInfo.players, state: this.state, noTasks: gameInfo.noTasks })
 		}.bind(this));
 	}
 
@@ -382,6 +382,7 @@ class WorldScene extends MultiplayerScene {
 		this.state = data.state;
 
 		this.initPlayers = this.initStartPosition(data.players);
+		this.noTasks = data.noTasks;
 		this.currentBattle = "dummy"
 		this.StationLen = 20;
 		this.emitKill = false;
@@ -431,7 +432,7 @@ class WorldScene extends MultiplayerScene {
 		this.createGameIO();
 
 		this.createAllPlayers(this.initPlayers);
-		this.events.emit('setNoTasks', Object.keys(this.initPlayers).length * 5);
+		this.events.emit('setNoTasks', this.noTasks);
 	}
 
 	createGameIO() {
@@ -446,10 +447,14 @@ class WorldScene extends MultiplayerScene {
 		});
 
 		this.socket.on('gameFinish', (data) => {
-			// Defender win all tasks done
+			console.log("game is finished", data)
+			if (data) {
+				// Defender win all tasks done
 
-			// Imposter kills everyone
+			} else {
+				// Imposter kills everyone
 
+			}
 		});
 
 		this.socket.on('deactivatePlayer', (playerId) => {
@@ -754,8 +759,6 @@ class WorldScene extends MultiplayerScene {
 			[547, 425],
 			[748, 425],
 		];
-
-
 
 		this.stations = this.physics.add.group({ classType: Phaser.GameObjects.Zone });
 		for (var i = 0; i < stationCoord.length; i++) {
