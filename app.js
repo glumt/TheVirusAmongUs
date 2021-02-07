@@ -168,6 +168,10 @@ io.on('connection', function(socket) {
 
 		var players = Object.values(gameRooms[data.roomKey].players);
 		for (let p of players) {
+			if (!p.alive) {
+				continue
+			}
+
 			console.log(p)
 			if (p.vote < 0) {
 				allVoted = false;
@@ -185,23 +189,42 @@ io.on('connection', function(socket) {
 			while (noVotes--) voteCount[noVotes] = 0;
 
 			for (let p of players) {
+				if (p.vote == -1) {
+					continue
+				}
 				voteCount[p.vote - 1] += 1;
 			}
 
-			var votedPlayerNum = voteCount.indexOf(Math.max(...voteCount)) + 1;
-			console.log(voteCount)
-			console.log("max votes for", votedPlayerNum)
-
-			for (let p of players) {
-				if (p.colorId == votedPlayerNum) {
-					// send to all clients
-					console.log(p.playerId)
-					io.in(data.roomKey).emit('voteKill', {
-						playerId: p.playerId
-					});
-
+			// check for tie in vote => no killing
+			const maxVotes = Math.max(...voteCount);
+			var count = 0;
+			for (var i = 0; i < voteCount.length; ++i) {
+				if (voteCount[i] == maxVotes) {
+					count++;
 				}
-				// reset votes
+			}
+
+			if (count > 1) {
+				// emit no vote kill
+				io.in(data.roomKey).emit('voteKill', {
+					playerId: -1
+				});
+			} else {
+				// determine playerId for voted kill
+				var votedPlayerNum = voteCount.indexOf(Math.max(...voteCount)) + 1;
+				for (let p of players) {
+					if (p.colorId == votedPlayerNum) {
+						// send to all clients
+						console.log(p.playerId)
+						io.in(data.roomKey).emit('voteKill', {
+							playerId: p.playerId
+						});
+					}
+				}
+			}
+
+			// reset votes
+			for (let p of players) {
 				p.vote = -1;
 			}
 		}

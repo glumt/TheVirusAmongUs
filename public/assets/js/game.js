@@ -104,6 +104,7 @@ class MultiplayerScene extends Phaser.Scene {
 
 		this.socket.on('startGame', function(gameInfo) {
 			this.scene.stop('LobbyScene');
+			console.log("virusID", gameInfo.virusID)
 			this.state.virusID = gameInfo.virusID;
 
 			// start UI scene
@@ -445,7 +446,7 @@ class WorldScene extends MultiplayerScene {
 		this.socket.on('startVote', (players) => {
 			console.log(players)
 			this.scene.pause("WorldScene");
-			this.scene.launch("VoteScene", { socket: this.socket, state: this.state, players: players });
+			this.scene.launch("VoteScene", { socket: this.socket, state: this.state, players: players, playerIsAlive: this.playerIsAlive });
 		});
 
 		this.socket.on('gameFinish', (data) => {
@@ -1088,6 +1089,7 @@ class VoteScene extends Phaser.Scene {
 		this.socket = data.socket;
 		this.state = data.state;
 		this.playersData = data.players;
+		this.playerIsAlive = data.playerIsAlive;
 
 		this.voteSended = false;
 	}
@@ -1128,41 +1130,60 @@ class VoteScene extends Phaser.Scene {
 
 			[x, y] = getDisplayPosition(this, i, noPlayers);
 
-			var player = this.add.sprite(0, 0, 'LCDTyp');
+			if (this.playersData[id].alive) {
+				var spriteStr = 'LCDTyp';
+			} else {
+				var spriteStr = 'LCDTypOffline';
+			}
+
+			var player = this.add.sprite(0, 0, spriteStr);
 			player.setOrigin(0.5);
 			player.setPosition(x, y);
 			player.setScale(.3);
 			player.setSize(16, 32);
 			player.setTint(COLORS.PLAYER[this.playersData[id].colorId]);
 
-			[x, y] = createTextField(this, x + buttonWidth / 2, y + buttonHeight, buttonWidth, buttonHeight);
+			if (this.playersData[id].alive) {
+				[x, y] = createTextField(this, x + buttonWidth / 2, y + buttonHeight, buttonWidth, buttonHeight);
 
-			var btn = this.buttons.create(x, y, "Vote", textStyle);
-			btn.setOrigin(0.5);
+				var btn = this.buttons.create(x, y, "Vote", textStyle);
+				btn.setOrigin(0.5);
+				btn.setDataEnabled();
+				btn.setData("voteNumber", i);
+			}
 
 			i += 1;
-		}
 
-		// assign unqiue task name to each station
-		var btns = this.buttons.getChildren();
-		for (var i = 0; i < btns.length; i++) {
-			btns[i].setDataEnabled();
-			btns[i].setData("voteNumber", i + 1);
-		}
+			// assign unqiue task name to each station
+			/*
+			var btns = this.buttons.getChildren();
+			for (var i = 0; i < btns.length; i++) {
+				btns[i].setDataEnabled();
+				btns[i].setData("voteNumber", i + 1);
+			}
+			*/
 
-		this.physics.add.overlap(this.buttons, this.hitZone, this.sendVote, false, this);
+			if (this.playersData[id].alive) {
+				this.physics.add.overlap(this.buttons, this.hitZone, this.sendVote, false, this);
+			}
+		}
 	}
 
 	createGameIO() {
-		// receive result
+		// receive vote result
 		this.socket.on("voteKill", (vote) => {
+			console.log("voted kill", vote.playerId)
+			console.log("virus id", this.state.virusID)
 			this.scene.stop('VoteScene');
 			if (this.state.virusID == vote.playerId) {
 				// win
-				this.scene.resume('EndScene');
+				this.scene.stop('WorldScene');
+				this.scene.start('PCWinsScene');
 			} else {
 				// emit vote and continue game
-				this.socket.emit('killPlayer', { playerId: vote.playerId, roomKey: this.state.roomKey });
+				if (vote.playerId != -1) {
+					this.socket.emit('killPlayer', { playerId: vote.playerId, roomKey: this.state.roomKey });
+				}
 				this.scene.resume('WorldScene');
 			}
 		});
