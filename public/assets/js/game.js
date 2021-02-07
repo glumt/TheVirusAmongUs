@@ -44,7 +44,7 @@ class BootScene extends Phaser.Scene {
 		this.load.image('stationFive', 'assets/sprites/five.png');
 		this.load.image('stationSix', 'assets/sprites/six.png');
 		this.load.image('PCWins', 'assets/sprites/PCWins.png');
-		this.load.image('VirusWins','assets/sprites/VirusWins.png');
+		this.load.image('VirusWins', 'assets/sprites/VirusWins.png');
 
 
 		this.load.spritesheet('LCDTyp', 'assets/spritesheet/LCDTyp.png', { frameWidth: 50, frameHeight: 100 });
@@ -215,10 +215,10 @@ class StartScene extends Phaser.Scene {
 			this.notValidText.setText("Invalid room key");
 		}.bind(this));
 
-		this.socket.on("keyIsValid", function(input) {
+		this.socket.on("keyIsValid", (input) => {
 			this.createJoinButton();
 			this.roomKeyText.setText(input);
-		}.bind(this));
+		});
 
 
 		// Game Title
@@ -244,6 +244,8 @@ class StartScene extends Phaser.Scene {
 	}
 
 	createJoinButton() {
+		this.notValidText.setText("");
+
 		const textStyle = { color: COLORS.UI_TEXT, fontSize: "12px", fintStyle: "bold", align: "center" };
 		var inX, inY = 0;
 
@@ -528,8 +530,8 @@ class WorldScene extends MultiplayerScene {
 		this.zone_space.setOrigin(0.0);
 		this.zone_space.setDepth(2);
 		this.zone_space.setScrollFactor(0);
-		
-	
+
+
 
 
 		// Add input callback
@@ -552,8 +554,8 @@ class WorldScene extends MultiplayerScene {
 		this.zone_down.on('pointerdown', () => { this.goDown(); });
 		this.zone_down.on('pointerup', () => { this.releaseDown(); });
 		this.zone_down.on('pointerout', () => { this.releaseDown(); });
-		
-	
+
+
 
 
 	}
@@ -577,7 +579,7 @@ class WorldScene extends MultiplayerScene {
 		this.is_holding.down = true;
 		this.is_holding.direction = 'down';
 	}
-	
+
 	goSpace() {
 		this.is_holding.space = true;
 		this.is_holding.direction = 'space';
@@ -627,11 +629,11 @@ class WorldScene extends MultiplayerScene {
 			this.is_holding.direction = false;
 		}
 	}
-	
+
 	releaseSpace() {
 		this.is_holding.space = false;
 		console.log('releaseSpace');
-		
+
 	}
 
 	createMap() {
@@ -816,18 +818,18 @@ class WorldScene extends MultiplayerScene {
 
 	//fortlaufende Aktualisierungen
 	update() {
-		
-	
-		
-		
+
+
+
+
 		if (this.container) {
 			this.container.body.setVelocity(0);
 
 			if (this.scene.isActive(this.currentBattle)) {
 				return
 			}
-			
-	
+
+
 			// Horizontal movement
 			if (this.cursors.left.isDown) {
 				this.container.body.setVelocityX(-50);
@@ -878,11 +880,11 @@ class WorldScene extends MultiplayerScene {
 				this.container.body.setVelocityY(50);
 				this.player.anims.play('down', true);
 			}
-			
-			
-				
-				
-				
+
+
+
+
+
 
 			// emit player movement
 			this.emitPlayerMovement()
@@ -1777,9 +1779,9 @@ class PCWinsScene extends Phaser.Scene {
 			key: 'PCWinsScene',
 		});
 	}
-	create() {	
-	this.add.image(160, 120, 'PCWins');	
-	}	
+	create() {
+		this.add.image(160, 120, 'PCWins');
+	}
 }
 
 class VirusWinsScene extends Phaser.Scene {
@@ -1788,9 +1790,9 @@ class VirusWinsScene extends Phaser.Scene {
 			key: 'VirusWinsScene',
 		});
 	}
-	create() {	
-	this.add.image(160, 120, 'VirusWins');	
-	}	
+	create() {
+		this.add.image(160, 120, 'VirusWins');
+	}
 }
 
 
@@ -1802,7 +1804,7 @@ class VirusWinsScene extends Phaser.Scene {
 
 
 var gameScenes = [
-	
+
 	BootScene,
 	StartScene,
 	LobbyScene,
@@ -1811,7 +1813,7 @@ var gameScenes = [
 	VoteScene,
 	PCWinsScene,
 	VirusWinsScene,
-	
+
 ];
 
 allScenes = gameScenes.concat(taskScenes);

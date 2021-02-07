@@ -27,9 +27,12 @@ io.on('connection', function(socket) {
 	// Waiting room communication
 	socket.on("isKeyValid", function(input) {
 		console.log(input)
-		const keyArray = Object.keys(gameRooms)
-			? socket.emit("keyIsValid", input)
-			: socket.emit("keyNotValid");
+
+		if (input in gameRooms) {
+			socket.emit("keyIsValid", input)
+		} else {
+			socket.emit("keyNotValid");
+		}
 	});
 
 	socket.on("getRoomKey", async function() {
