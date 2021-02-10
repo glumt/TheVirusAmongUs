@@ -1094,7 +1094,19 @@ class VoteScene extends Phaser.Scene {
 
 	createPlayers() {
 
+
 		const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fintStyle: "bold", align: "center" };
+
+		if (this.playerIsAlive) {
+			var deadInfo = this.add.text(
+				this.physics.world.bounds.width / 2,
+				30,
+				"You are dead!",
+				textStyle
+			);
+
+			deadInfo.setOrigin(0.5);
+		}
 
 		// render all players
 		this.buttons = this.physics.add.group({ classType: Phaser.GameObjects.Text });
