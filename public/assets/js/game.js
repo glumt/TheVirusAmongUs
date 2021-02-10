@@ -820,6 +820,11 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	startTask(player, zone) {
+
+		if (this.scene.isActive(this.currentBattle)) {
+			return
+		}
+
 		if (this.socket.id == this.state.virusID) {
 			return
 		}
