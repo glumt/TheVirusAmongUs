@@ -824,9 +824,17 @@ class WorldScene extends MultiplayerScene {
 			return
 		}
 
+		const dist = calcDistance(player, zone);
+
+		if (dist < 15.0) {
+			this.events.emit('enableTask');
+		} else {
+			this.events.emit('disableTask');
+			return
+		}
+
 		if (this.cursors.space.isDown) {
 			const taskName = zone.getData("taskName")
-			console.log(taskName)
 			this.input.keyboard.resetKeys();
 			this.currentBattle = taskName
 			this.scene.launch(taskName, { socket: this.socket, roomKey: this.state.roomKey });
@@ -992,6 +1000,18 @@ class UIScene extends Phaser.Scene {
 			this.taskText.setText("Tasks: " + this.completedTasks + "/" + this.noTasks);
 		});
 
+		this.createTaskNotification();
+
+		ourGame.events.on('enableTask', () => {
+			this.startTaskBox.setVisible(true)
+			this.startTaskText.setVisible(true)
+		});
+
+		ourGame.events.on('disableTask', () => {
+			this.startTaskBox.setVisible(false)
+			this.startTaskText.setVisible(false)
+		});
+
 		this.createKillNotification();
 
 		ourGame.events.on('enableKill', () => {
@@ -1015,6 +1035,28 @@ class UIScene extends Phaser.Scene {
 			this.reportBox.setVisible(false)
 			this.reportText.setVisible(false)
 		});
+	}
+
+	createTaskNotification() {
+		this.startTaskBox = this.add.graphics();
+		this.startTaskBox.lineStyle(1, COLORS.MAIN_BOX_BORDER);
+		this.startTaskBox.fillStyle(COLORS.UI_BOX, 1);
+
+		var width = 130;
+		var height = 15;
+		var inX = 315 - width;
+		var inY = 220;
+		this.startTaskBox.strokeRect(inX, inY, width, height);
+		this.startTaskBox.fillRect(inX, inY, width, height);
+
+		// Returning coordinates for text
+		inX = 315 - width / 2;
+		inY = 220 + height / 2;
+		this.startTaskText = this.add.text(inX, inY, "START TASK", { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" });
+		this.startTaskText.setOrigin(0.5);
+
+		this.startTaskBox.setVisible(false)
+		this.startTaskText.setVisible(false)
 	}
 
 	createKillNotification() {
