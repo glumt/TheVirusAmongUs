@@ -132,6 +132,7 @@ class MultiplayerScene extends Phaser.Scene {
 		otherPlayer.setScale(.3);
 		otherPlayer.setSize(16, 32);
 		otherPlayer.setTint(COLORS.PLAYER[playerInfo.colorId])
+		otherPlayer.setDepth(+4);
 		otherPlayer.colorId = playerInfo.colorId;
 		otherPlayer.playerId = playerInfo.playerId;
 		otherPlayer.isAlive = true;
@@ -501,6 +502,7 @@ class WorldScene extends MultiplayerScene {
 			deadPlayer.setScale(.3);
 			deadPlayer.setSize(16, 32);
 			deadPlayer.setTint(COLORS.PLAYER[cId])
+			deadPlayer.setDepth(+4);
 			deadPlayer.playerId = playerId;
 			this.deadPlayers.add(deadPlayer)
 
@@ -749,7 +751,7 @@ class WorldScene extends MultiplayerScene {
 		this.container = this.add.container(playerInfo.x, playerInfo.y);
 		this.container.setSize(16, 32);
 		this.container.add(this.player);
-		this.container.setDepth(+3);
+		this.container.setDepth(+4);
 		this.physics.world.enable(this.container);
 
 		// update camera
