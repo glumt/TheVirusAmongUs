@@ -390,6 +390,7 @@ class WorldScene extends MultiplayerScene {
 		this.currentBattle = "dummy"
 		this.StationLen = 20;
 		this.playerIsAlive = true;
+		this.blockTask = false;
 	}
 
 	initStartPosition(players) {
@@ -829,6 +830,10 @@ class WorldScene extends MultiplayerScene {
 			return
 		}
 
+		if (this.blockTask) {
+			return
+		}
+
 		const dist = calcDistance(player, zone);
 
 		if (dist < 15.0) {
@@ -879,8 +884,11 @@ class WorldScene extends MultiplayerScene {
 
 		if (dist < 10.0) {
 			this.events.emit('enableReport');
+			this.events.emit('disableTask');
+			this.blockTask = true;
 		} else {
 			this.events.emit('disableReport');
+			this.blockTask = false;
 			return
 		}
 
