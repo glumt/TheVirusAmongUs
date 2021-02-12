@@ -870,6 +870,7 @@ class WorldScene extends MultiplayerScene {
 		}
 
 		if (this.cursors.space.isDown) {
+			this.input.keyboard.resetKeys();
 			this.socket.emit('killPlayer', { playerId: otherPlayer.playerId, roomKey: this.state.roomKey });
 		}
 	}
@@ -895,6 +896,7 @@ class WorldScene extends MultiplayerScene {
 		}
 
 		if (this.cursors.space.isDown) {
+			this.input.keyboard.resetKeys();
 			this.socket.emit('reportKill', { roomKey: this.state.roomKey });
 		}
 	}
@@ -1154,16 +1156,27 @@ class VoteScene extends Phaser.Scene {
 
 		const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fintStyle: "bold", align: "center" };
 
-		if (this.playerIsAlive) {
+		if (!this.playerIsAlive) {
 			var deadInfo = this.add.text(
 				this.physics.world.bounds.width / 2,
-				30,
+				20,
 				"You are dead!",
 				textStyle
 			);
 
 			deadInfo.setOrigin(0.5);
 		}
+
+		this.noPlayers = Object.keys(this.playersData).length;
+
+		this.voteText = this.add.text(
+			this.physics.world.bounds.width / 2,
+			40,
+			"Vote: 0/" + (this.noPlayers - 1).toString(),
+			textStyle
+		);
+		this.voteText.setOrigin(0.5);
+
 
 		// render all players
 		this.buttons = this.physics.add.group({ classType: Phaser.GameObjects.Text });
@@ -1175,7 +1188,6 @@ class VoteScene extends Phaser.Scene {
 			this.moveZone(pointer);
 		});
 
-		const noPlayers = Object.keys(this.playersData).length;
 		var i = 1;
 
 		var x = 0;
@@ -1184,7 +1196,7 @@ class VoteScene extends Phaser.Scene {
 		const buttonHeight = 18;
 		for (const id in this.playersData) {
 
-			[x, y] = getDisplayPosition(this, i, noPlayers);
+			[x, y] = getDisplayPosition(this, i, this.noPlayers);
 
 			if (this.playersData[id].alive) {
 				var spriteStr = 'LCDTyp';
@@ -1207,25 +1219,22 @@ class VoteScene extends Phaser.Scene {
 				btn.setDataEnabled();
 				btn.setData("voteNumber", i);
 			}
-
 			i += 1;
 
-			// assign unqiue task name to each station
-			/*
-			var btns = this.buttons.getChildren();
-			for (var i = 0; i < btns.length; i++) {
-				btns[i].setDataEnabled();
-				btns[i].setData("voteNumber", i + 1);
-			}
-			*/
-
-			if (this.playersData[id].alive) {
+			if (this.playerIsAlive) {
 				this.physics.add.overlap(this.buttons, this.hitZone, this.sendVote, false, this);
 			}
 		}
 	}
 
 	createGameIO() {
+
+		// update vote number
+		this.socket.on("updateVoteCount", (noVotes) => {
+			this.voteText.setText(
+				"Vote: " + noVotes.toString() + "/" + (this.noPlayers - 1).toString());
+		});
+
 		// receive vote result
 		this.socket.on("voteKill", (vote) => {
 			console.log("voted kill", vote.playerId)
@@ -1254,8 +1263,19 @@ class VoteScene extends Phaser.Scene {
 			console.log("hit")
 			console.log("Button", btn)
 			console.log("hit Zone", hitZone.getData("voteNumber"))
+			const voteNumber = hitZone.getData("voteNumber");
+
+			const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fintStyle: "bold", align: "center" };
+			var voteText = this.add.text(
+				this.physics.world.bounds.width / 2,
+				this.physics.world.bounds.height * 0.9,
+				"Vote for Player " + voteNumber.toString(),
+				textStyle
+			);
+			voteText.setOrigin(0.5);
+
 			// dont know why the voteNUmber is in the hitZone
-			this.socket.emit('vote', { vote: hitZone.getData("voteNumber"), roomKey: this.state.roomKey });
+			this.socket.emit('vote', { vote: voteNumber, roomKey: this.state.roomKey });
 			this.voteSended = true;
 		}
 	}
