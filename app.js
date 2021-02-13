@@ -183,7 +183,7 @@ io.on('connection', function(socket) {
 
 		io.in(data.roomKey).emit('updateVoteCount', noVotes);
 
-		if (noVotes == (noPlayers-noDead)) {
+		if (noVotes == (noPlayers - noDead)) {
 			console.log("all have voted")
 			// count votes
 			var voteCount = [];
@@ -275,6 +275,7 @@ app.use('/fileupload', function(req, res) {
 	var form = new formidable.IncomingForm();
 	form.parse(req, function(err, fields, files) {
 		// oldpath : temporary folder to which file is saved to
+		//console.log(files)
 		var oldpath = files.filetoupload.path;
 		//var newpath = upload_path + files.filetoupload.name;
 
@@ -285,17 +286,18 @@ app.use('/fileupload', function(req, res) {
 				console.log("Error Found:", err);
 			}
 			else {
-
-				// Get the current filenames 
-				// after the function 
+				// Get the current filenames after the function 
 				getCurrentFilenames();
 				console.log("\nFile Contents of copied_file:",
 					fs.readFileSync(newpath, "utf8"));
 			}
 		});
 
-		//res.write('File uploaded and moved!');
-		res.end();
+		/*
+				res.write('File uploaded and moved!');
+				res.end();
+				*/
+		res.sendFile(__dirname + '/public/uploadFinish.html');
 	});
 });
 
@@ -318,7 +320,6 @@ function keyGenerator() {
 	for (let i = 0; i < 4; i++) {
 		code += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
-	code = "test";
 	return code;
 }
 
