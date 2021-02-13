@@ -1342,6 +1342,12 @@ class TaskScene extends Phaser.Scene {
 		this.socket = data.socket;
 		this.roomKey = data.roomKey;
 		this.emitComplete = true;
+		this.elementArea = {
+			minX: 30,
+			maxX: this.physics.world.bounds.width,
+			minY: 30,
+			maxY: this.physics.world.bounds.height * 0.9
+		};
 	}
 
 	create() {
@@ -1349,12 +1355,15 @@ class TaskScene extends Phaser.Scene {
 
 		this.createTask();
 
+		// show task question
+		this.showQuestion();
+
 		// make abort key
 		this.createAbortButton();
 	}
 
 	createAbortButton() {
-		const textStyle = { color: COLORS.UI_TEXT, fontSize: "24px", fintStyle: "bold", align: "center" };
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "24px", fontStyle: "bold", align: "center" };
 		var inX, inY = 0;
 
 		[inX, inY] = createTextField(this, this.physics.world.bounds.width, 0, 30, 30);
@@ -1364,6 +1373,16 @@ class TaskScene extends Phaser.Scene {
 		this.abortButton.on("pointerdown", () => {
 			this.abortTask();
 		});
+	}
+
+	showQuestion() {
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fontStyle: "bold", align: "center" };
+
+		var inX, inY = 0;
+		const w = this.gameData.question.length * 10 + 5;
+		[inX, inY] = createTextField(this, this.physics.world.bounds.width / 2 + w / 2, 5, w, 20);
+		var question = this.add.text(inX, inY, this.gameData.question, textStyle);
+		question.setOrigin(0.5);
 	}
 
 	abortTask() {
@@ -1390,6 +1409,24 @@ function createTextField(scene, x, y, width, height) {
 	return [inX, inY]
 }
 
+function moveInScreenArea(obj, worldWidth, worldHeight) {
+	if ((obj.x - obj.originX * obj.width) < 0) {
+		obj.x = obj.x + obj.originX * obj.width;
+	}
+
+	if ((obj.x + obj.originX * obj.width) > worldWidth) {
+		obj.x = obj.x - obj.originX * obj.width;
+	}
+
+	if ((obj.y - obj.originY * obj.height) < 0) {
+		obj.y = obj.x + obj.originY * obj.height;
+	}
+
+	if ((obj.y + obj.originY * obj.width) > worldHeight) {
+		obj.y = obj.y - obj.originY * obj.height;
+	}
+}
+
 
 class TaskScenePairs extends TaskScene {
 	constructor(gameData) {
@@ -1413,11 +1450,12 @@ class TaskScenePairs extends TaskScene {
 			this.pairs1.setOrigin(0.5);
 
 			this.container1 = this.add.container(
-				Phaser.Math.RND.between(0, this.physics.world.bounds.width),
-				Phaser.Math.RND.between(0, this.physics.world.bounds.height)
+				Phaser.Math.RND.between(this.elementArea.minX, this.elementArea.maxX),
+				Phaser.Math.RND.between(this.elementArea.minY, this.elementArea.maxY)
 			);
 
-			this.container1.setSize(64, 24);
+			this.container1.setSize(this.pairs1.width, this.pairs1.height);
+			moveInScreenArea(this.container1);
 			this.container1.add(this.pairs1);
 			this.container1.setInteractive();
 			this.input.setDraggable(this.container1);
@@ -1431,11 +1469,12 @@ class TaskScenePairs extends TaskScene {
 			this.pairs2.setOrigin(0.5);
 
 			this.container2 = this.add.container(
-				Phaser.Math.RND.between(0, this.physics.world.bounds.width),
-				Phaser.Math.RND.between(0, this.physics.world.bounds.height)
+				Phaser.Math.RND.between(this.elementArea.minX, this.elementArea.maxX),
+				Phaser.Math.RND.between(this.elementArea.minY, this.elementArea.maxY)
 			);
 
-			this.container2.setSize(64, 24);
+			this.container2.setSize(this.pairs2.width, this.pairs2.height);
+			moveInScreenArea(this.container2);
 			this.container2.add(this.pairs2);
 			this.container2.setInteractive();
 			this.input.setDraggable(this.container2);
@@ -1560,9 +1599,15 @@ class TaskSceneGroup extends TaskScene {
 			0xf54242
 		);
 		this.group1Field.add(area);
+		this.group1Field.setDepth(-1);
 		this.physics.world.enable(this.group1Field);
-		this.add.text(0, 0, this.gameData.group1);
-
+		var group1Text = this.add.text(
+			this.physics.world.bounds.width / 4,
+			this.physics.world.bounds.height * 0.9,
+			this.gameData.group1
+		);
+		group1Text.setOrigin(0.5);
+		group1Text.setColor('rgba(0,0,0)');
 		// group field 2
 		this.noItems2 = this.gameData.items2.length;
 		this.overlapG2 = new Array(this.noItems2);
@@ -1583,8 +1628,15 @@ class TaskSceneGroup extends TaskScene {
 			0x031f4c
 		);
 		this.group2Field.add(area2);
+		this.group2Field.setDepth(-1);
 		this.physics.world.enable(this.group2Field);
-		this.add.text(this.physics.world.bounds.width / 2, 0, this.gameData.group2);
+		var group2Text = this.add.text(
+			this.physics.world.bounds.width * 3 / 4,
+			this.physics.world.bounds.height * 0.9,
+			this.gameData.group2
+		);
+		group2Text.setOrigin(0.5);
+		group2Text.setColor('rgba(230,230,230)');
 
 		// add text fields
 
@@ -1595,11 +1647,12 @@ class TaskSceneGroup extends TaskScene {
 			text.setOrigin(0.5);
 
 			this.container1 = this.add.container(
-				Phaser.Math.RND.between(0, this.physics.world.bounds.width),
-				Phaser.Math.RND.between(0, this.physics.world.bounds.height)
+				Phaser.Math.RND.between(this.elementArea.minX, this.elementArea.maxX),
+				Phaser.Math.RND.between(this.elementArea.minY, this.elementArea.maxY)
 			);
 
-			this.container1.setSize(64, 24);
+			this.container1.setSize(text.width, text.height);
+			moveInScreenArea(this.container1);
 			this.container1.add(text);
 			this.container1.setInteractive();
 			this.input.setDraggable(this.container1);
@@ -1617,11 +1670,12 @@ class TaskSceneGroup extends TaskScene {
 			text.setOrigin(0.5);
 
 			this.container2 = this.add.container(
-				Phaser.Math.RND.between(0, this.physics.world.bounds.width),
-				Phaser.Math.RND.between(0, this.physics.world.bounds.height)
+				Phaser.Math.RND.between(this.elementArea.minX, this.elementArea.maxX),
+				Phaser.Math.RND.between(this.elementArea.minY, this.elementArea.maxY)
 			);
 
-			this.container2.setSize(64, 24);
+			this.container2.setSize(text.width, text.height);
+			moveInScreenArea(this.container2);
 			this.container2.add(text);
 			this.container2.setInteractive();
 			this.input.setDraggable(this.container2);
@@ -1765,11 +1819,12 @@ class TaskSceneOrder extends TaskScene {
 			text.setOrigin(0.5);
 
 			this.container2 = this.add.container(
-				Phaser.Math.RND.between(0, this.physics.world.bounds.width),
-				Phaser.Math.RND.between(0, this.physics.world.bounds.height)
+				Phaser.Math.RND.between(this.elementArea.minX, this.elementArea.maxX),
+				Phaser.Math.RND.between(this.elementArea.minY, this.elementArea.maxY)
 			);
 
-			this.container2.setSize(64, 24);
+			this.container2.setSize(text.width, text.height);
+			moveInScreenArea(this.container2);
 			this.container2.add(text);
 			this.container2.setDepth(this.noItems + i);
 			this.container2.setInteractive();
@@ -1969,7 +2024,7 @@ var config = {
 		default: 'arcade',
 		arcade: {
 			gravity: { y: 0 },
-			debug: GLOBAL_DEBUG
+			debug: true
 		}
 	},
 	dom: {
