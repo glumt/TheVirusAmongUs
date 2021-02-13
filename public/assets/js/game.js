@@ -1,3 +1,4 @@
+const GLOBAL_DEBUG = false;
 const COLORS = {
 	MAIN_BOX: Phaser.Display.Color.GetColor(7, 14, 145),
 	MAIN_BOX_BORDER: Phaser.Display.Color.GetColor(222, 222, 222),
@@ -429,6 +430,7 @@ class WorldScene extends MultiplayerScene {
 			right: false,
 			up: false,
 			down: false,
+			space: false,
 			direction: false,
 		};
 
@@ -513,33 +515,73 @@ class WorldScene extends MultiplayerScene {
 
 	createMobileControls() {
 
-		this.zone_left = this.add.zone(0, 75, 100, 100);
+		let debug = this.add.graphics();
+		debug.fillStyle('0x000000', 0.5);
+		debug.setScrollFactor(0);
+		debug.setDepth(9);
+
+		const screenWidth = 320;
+		const screenHeight = 240;
+
+		var w = 100;
+		var h = 100;
+
+		var y = screenHeight / 2 - h / 2;
+		var x = 0;
+
+		this.zone_left = this.add.zone(0, y, 100, 100);
 		this.zone_left.setOrigin(0.0);
-		this.zone_left.setDepth(2);
+		this.zone_left.setDepth(10);
 		this.zone_left.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
 
-		this.zone_right = this.add.zone(225, 75, 100, 100);
+		x = screenWidth - w;
+
+		this.zone_right = this.add.zone(x, y, 100, 100);
 		this.zone_right.setOrigin(0.0);
-		this.zone_right.setDepth(2);
+		this.zone_right.setDepth(10);
 		this.zone_right.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
 
-		this.zone_up = this.add.zone(112, 0, 100, 100);
+		x = screenWidth / 2 - w / 2;
+		y = 0;
+		this.zone_up = this.add.zone(x, 0, 100, 100);
 		this.zone_up.setOrigin(0.0);
-		this.zone_up.setDepth(2);
+		this.zone_up.setDepth(10);
 		this.zone_up.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
 
-		this.zone_down = this.add.zone(112, 150, 100, 100);
+		y = screenHeight - h;
+		this.zone_down = this.add.zone(x, y, w, h);
 		this.zone_down.setOrigin(0.0);
-		this.zone_down.setDepth(2);
+		this.zone_down.setDepth(10);
 		this.zone_down.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
 
-		this.zone_space = this.add.zone(250, 250, 100, 100);
+		x = 230;
+		y = 210;
+		w = 90;
+		h = 30;
+		this.zone_space = this.add.zone(x, y, w, h);
 		this.zone_space.setOrigin(0.0);
-		this.zone_space.setDepth(2);
+		this.zone_space.setDepth(10);
 		this.zone_space.setScrollFactor(0);
-
-
-
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
 
 		// Add input callback
 		this.zone_left.setInteractive();
@@ -562,9 +604,10 @@ class WorldScene extends MultiplayerScene {
 		this.zone_down.on('pointerup', () => { this.releaseDown(); });
 		this.zone_down.on('pointerout', () => { this.releaseDown(); });
 
-
-
-
+		this.zone_space.setInteractive();
+		this.zone_space.on('pointerdown', () => { this.goSpace(); });
+		this.zone_space.on('pointerup', () => { this.releaseSpace(); });
+		this.zone_space.on('pointerout', () => { this.releaseSpace(); });
 	}
 
 	goLeft() {
@@ -589,8 +632,6 @@ class WorldScene extends MultiplayerScene {
 
 	goSpace() {
 		this.is_holding.space = true;
-		this.is_holding.direction = 'space';
-		console.log('goSpace');
 	}
 
 
@@ -823,7 +864,6 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	startTask(player, zone) {
-
 		if (this.scene.isActive(this.currentBattle)) {
 			return
 		}
@@ -844,10 +884,12 @@ class WorldScene extends MultiplayerScene {
 			this.events.emit('disableTask');
 			return
 		}
+		const activate = this.cursors.space.isDown || this.is_holding.space;
 
-		if (this.cursors.space.isDown) {
+		if (activate) {
 			const taskName = zone.getData("taskName")
 			this.input.keyboard.resetKeys();
+			this.is_holding.space = false;
 			this.currentBattle = taskName
 			this.scene.launch(taskName, { socket: this.socket, roomKey: this.state.roomKey });
 		}
@@ -869,8 +911,11 @@ class WorldScene extends MultiplayerScene {
 			return
 		}
 
-		if (this.cursors.space.isDown) {
+		const activate = this.cursors.space.isDown || this.is_holding.space;
+
+		if (activate) {
 			this.input.keyboard.resetKeys();
+			this.is_holding.space = false;
 			this.socket.emit('killPlayer', { playerId: otherPlayer.playerId, roomKey: this.state.roomKey });
 		}
 	}
@@ -894,9 +939,11 @@ class WorldScene extends MultiplayerScene {
 			this.blockTask = false;
 			return
 		}
+		const activate = this.cursors.space.isDown || this.is_holding.space;
 
-		if (this.cursors.space.isDown) {
+		if (activate) {
 			this.input.keyboard.resetKeys();
+			this.is_holding.space = false;
 			this.socket.emit('reportKill', { roomKey: this.state.roomKey });
 		}
 	}
@@ -1059,7 +1106,7 @@ class UIScene extends Phaser.Scene {
 		this.startTaskBox.lineStyle(1, COLORS.MAIN_BOX_BORDER);
 		this.startTaskBox.fillStyle(COLORS.UI_BOX, 1);
 
-		var width = 130;
+		var width = 80;
 		var height = 15;
 		var inX = 315 - width;
 		var inY = 220;
@@ -1081,7 +1128,7 @@ class UIScene extends Phaser.Scene {
 		this.killBox.lineStyle(1, COLORS.MAIN_BOX_BORDER);
 		this.killBox.fillStyle(COLORS.RED, 1);
 
-		var width = 130;
+		var width = 80;
 		var height = 15;
 		var inX = 315 - width;
 		var inY = 220;
@@ -1091,7 +1138,7 @@ class UIScene extends Phaser.Scene {
 		// Returning coordinates for text
 		inX = 315 - width / 2;
 		inY = 220 + height / 2;
-		this.killText = this.add.text(inX, inY, "Deaktivieren", { color: COLORS.UI_TEXT, fontSize: "10px", fontStyle: "bold", align: "center" });
+		this.killText = this.add.text(inX, inY, "DEACTIVATE", { color: COLORS.UI_TEXT, fontSize: "10px", fontStyle: "bold", align: "center" });
 		this.killText.setOrigin(0.5);
 
 		this.killBox.setVisible(false)
@@ -1103,7 +1150,7 @@ class UIScene extends Phaser.Scene {
 		this.reportBox.lineStyle(1, COLORS.MAIN_BOX_BORDER);
 		this.reportBox.fillStyle(COLORS.UI_BOX, 1);
 
-		var width = 130;
+		var width = 80;
 		var height = 15;
 		var inX = 315 - width;
 		var inY = 220;
@@ -1113,7 +1160,7 @@ class UIScene extends Phaser.Scene {
 		// Returning coordinates for text
 		inX = 315 - width / 2;
 		inY = 220 + height / 2;
-		this.reportText = this.add.text(inX, inY, "DEAKTIVIERUNG MELDEN", { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" });
+		this.reportText = this.add.text(inX, inY, "REPORT", { color: COLORS.UI_TEXT, fontSize: "10px", fintStyle: "bold", align: "center" });
 		this.reportText.setOrigin(0.5);
 
 		this.reportBox.setVisible(false)
@@ -1922,7 +1969,7 @@ var config = {
 		default: 'arcade',
 		arcade: {
 			gravity: { y: 0 },
-			debug: false
+			debug: GLOBAL_DEBUG
 		}
 	},
 	dom: {
