@@ -194,7 +194,8 @@ class StartScene extends Phaser.Scene {
 
 		// enter room key
 		[inX, inY] = createTextField(this, 140, 130, 130, 50);
-		this.inputElement = this.add.dom(inX, inY).createFromCache("roomform");
+		this.inputElement = this.add.dom(inX, inY, "#inDiv")
+		this.inputElement.createFromCache("roomform");
 		this.inputElement.addListener("click");
 		this.inputElement.setScale(0.8)
 		this.inputElement.on("click", function(event) {
@@ -1998,7 +1999,6 @@ class VirusWinsScene extends Phaser.Scene {
 
 
 var gameScenes = [
-
 	BootScene,
 	StartScene,
 	LobbyScene,
@@ -2007,7 +2007,6 @@ var gameScenes = [
 	VoteScene,
 	PCWinsScene,
 	VirusWinsScene,
-
 ];
 
 allScenes = gameScenes.concat(taskScenes);

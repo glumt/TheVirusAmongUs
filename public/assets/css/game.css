@@ -1,3 +1,25 @@
 body {
 	margin: 0;
 }
+
+#content {
+	margin: auto;
+	position: relative;
+	text-align: center;
+	padding: 15px;
+}
+
+#content div {
+	display: inline !important;
+}
+
+#content div div {
+	left: 0;
+}
+
+.container {
+	margin: auto;
+	position: relative;
+	text-align: center;
+	padding: 5px;
+}
