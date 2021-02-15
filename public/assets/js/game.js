@@ -15,7 +15,7 @@ const COLORS = {
 		5: Phaser.Display.Color.GetColor(254, 1, 209),		//Rosa
 		6: Phaser.Display.Color.GetColor(0, 240, 255), 		//Türkis
 		7: Phaser.Display.Color.GetColor(143, 0, 255), 		//Lila
-		8: Phaser.Display.Color.GetColor(34, 33, 35),		//schwarz
+		8: Phaser.Display.Color.GetColor(64, 40, 64),		//schwarz
 	}
 };
 
@@ -106,7 +106,6 @@ class MultiplayerScene extends Phaser.Scene {
 
 		this.socket.on('startGame', function(gameInfo) {
 			this.scene.stop('LobbyScene');
-			console.log("virusID", gameInfo.virusID)
 			this.state.virusID = gameInfo.virusID;
 
 			// start UI scene
@@ -128,7 +127,6 @@ class MultiplayerScene extends Phaser.Scene {
 	}
 
 	addOtherPlayers(playerInfo) {
-		console.log(playerInfo)
 		var otherPlayer = this.add.sprite(playerInfo.x, playerInfo.y, 'LCDTyp');
 		otherPlayer.setScale(.3);
 		otherPlayer.setSize(16, 32);
@@ -398,9 +396,23 @@ class WorldScene extends MultiplayerScene {
 	}
 
 	initStartPosition(players) {
+
+		const startPositions = [
+			[50, 100],
+			[752, 592],
+			[64, 592],
+			[640, 240],
+			[432, 240],
+			[560, 544],
+			[480, 592],
+			[336, 352],
+		];
+
+		var i = 0;
 		Object.keys(players).forEach((id) => {
-			players[id].x = 50;
-			players[id].y = 100;
+			players[id].x = startPositions[i][0];
+			players[id].y = startPositions[i][1];
+			i+=1;
 		});
 		return players
 	}
@@ -455,13 +467,11 @@ class WorldScene extends MultiplayerScene {
 		});
 
 		this.socket.on('startVote', (players) => {
-			console.log(players)
 			this.scene.pause("WorldScene");
 			this.scene.launch("VoteScene", { socket: this.socket, state: this.state, players: players, playerIsAlive: this.playerIsAlive });
 		});
 
 		this.socket.on('gameFinish', (data) => {
-			console.log("game is finished", data)
 			if (data) {
 				// Defender win all tasks done
 				this.scene.stop('WorldScene');
@@ -684,8 +694,6 @@ class WorldScene extends MultiplayerScene {
 
 	releaseSpace() {
 		this.is_holding.space = false;
-		console.log('releaseSpace');
-
 	}
 
 	createMap() {
@@ -1294,8 +1302,6 @@ class VoteScene extends Phaser.Scene {
 
 		// receive vote result
 		this.socket.on("voteKill", (vote) => {
-			console.log("voted kill", vote.playerId)
-			console.log("virus id", this.state.virusID)
 			this.scene.stop('VoteScene');
 			if (this.state.virusID == vote.playerId) {
 				// win
@@ -1317,9 +1323,6 @@ class VoteScene extends Phaser.Scene {
 
 	sendVote(btn, hitZone) {
 		if (!this.voteSended) {
-			console.log("hit")
-			console.log("Button", btn)
-			console.log("hit Zone", hitZone.getData("voteNumber"))
 			const voteNumber = hitZone.getData("voteNumber");
 
 			const textStyle = { color: COLORS.UI_TEXT, fontSize: "16px", fintStyle: "bold", align: "center" };
@@ -1899,8 +1902,6 @@ class TaskSceneOrder extends TaskScene {
 
 function getDisplayPosition(scene, posCount, maxCount) {
 
-	console.log("input: ", posCount, maxCount)
-
 	var maxConsInRow = 4;
 
 	const col = ((posCount - 1) % maxConsInRow) + 1;
@@ -1922,19 +1923,16 @@ function getDisplayPosition(scene, posCount, maxCount) {
 	const rowDist = (scene.physics.world.bounds.height - 2 * borderWidth - noRows * boxHeight) / (noRows + 1);
 
 	if ((row) == noRows) {
-		console.log(posCount, maxCount - maxConsInRow, maxConsInRow)
 		maxConsInRow = Math.max(maxCount % maxConsInRow, 1);
 	}
 
 	const boxGap = (scene.physics.world.bounds.width - 2 * borderWidth - maxConsInRow * boxWidth) / (maxConsInRow + 1);
 
-	console.log(boxGap, rowDist)
 
 	var x = borderWidth - boxWidth / 2 + col * (boxWidth + boxGap);
 	//let y = scene.physics.world.bounds.height / 2 + (Math.ceil((posCount + 1) / maxConsInRow) - 1) * (boxHeight + rowDist);
 	var y = borderWidth - boxHeight / 2 + row * (boxHeight + rowDist);
 
-	console.log("output: ", posCount, row, col, x, y)
 
 	return [x, y]
 }
@@ -1960,7 +1958,6 @@ for (const task in gameData) {
 	var key = taskString.concat(taskCounter.toString());
 	taskDescription = gameData[task];
 	taskDescription.key = key;
-	console.log(taskDescription)
 
 	switch (taskDescription.taskType) {
 		case "pairs":
@@ -1973,7 +1970,7 @@ for (const task in gameData) {
 			var scene = new TaskSceneOrder(taskDescription);
 			break;
 		default:
-			console.log("Something went wrong")
+			console.log("Something went wrong while initializing taskScenes.")
 	}
 	taskScenes.push(scene);
 
@@ -2032,7 +2029,7 @@ var config = {
 		default: 'arcade',
 		arcade: {
 			gravity: { y: 0 },
-			debug: true
+			debug: false
 		}
 	},
 	dom: {
