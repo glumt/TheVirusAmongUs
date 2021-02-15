@@ -394,6 +394,7 @@ class WorldScene extends MultiplayerScene {
 		this.StationLen = 20;
 		this.playerIsAlive = true;
 		this.blockTask = false;
+		this.finishedTasks = [];
 	}
 
 	initStartPosition(players) {
@@ -449,6 +450,8 @@ class WorldScene extends MultiplayerScene {
 	createGameIO() {
 		this.socket.on('updateCompletedTasks', (score) => {
 			this.events.emit('completedTask', score);
+			// add task to finshed list
+			this.finishedTasks.push(this.currentBattle);
 		});
 
 		this.socket.on('startVote', (players) => {
@@ -861,6 +864,7 @@ class WorldScene extends MultiplayerScene {
 		for (var i = 0; i < stat.length; i++) {
 			stat[i].setDataEnabled();
 			stat[i].setData("taskName", "TaskScene".concat(arr[i].toString()));
+			stat[i].setData("tastDone", false);
 		}
 	}
 
@@ -877,6 +881,12 @@ class WorldScene extends MultiplayerScene {
 			return
 		}
 
+		const taskName = zone.getData("taskName");
+		if (this.finishedTasks.indexOf(taskName) > -1) {
+			this.events.emit('disableTask');
+			return
+		}
+
 		const dist = calcDistance(player, zone);
 
 		if (dist < 15.0) {
@@ -888,10 +898,9 @@ class WorldScene extends MultiplayerScene {
 		const activate = this.cursors.space.isDown || this.is_holding.space;
 
 		if (activate) {
-			const taskName = zone.getData("taskName")
 			this.input.keyboard.resetKeys();
 			this.is_holding.space = false;
-			this.currentBattle = taskName
+			this.currentBattle = taskName;
 			this.scene.launch(taskName, { socket: this.socket, roomKey: this.state.roomKey });
 		}
 	}
