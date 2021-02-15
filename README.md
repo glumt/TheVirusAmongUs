@@ -5,12 +5,12 @@ Game for teaching virus attacks on computers.
 
 Install all packges
 
-'''
+```
 npm i
-'''
+```
 
 Start the game by:
 
-'''
+```
 node app.js
-'''
+```
