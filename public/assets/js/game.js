@@ -467,6 +467,7 @@ class WorldScene extends MultiplayerScene {
 		});
 
 		this.socket.on('startVote', (players) => {
+			this.scene.stop(this.currentBattle);
 			this.scene.pause("WorldScene");
 			this.scene.launch("VoteScene", { socket: this.socket, state: this.state, players: players, playerIsAlive: this.playerIsAlive });
 		});
@@ -475,10 +476,12 @@ class WorldScene extends MultiplayerScene {
 			if (data) {
 				// Defender win all tasks done
 				this.scene.stop('WorldScene');
+				this.scene.stop(this.currentBattle);
 				this.scene.start('PCWinsScene');
 			} else {
 				// Imposter kills everyone
 				this.scene.stop('WorldScene');
+				this.scene.stop(this.currentBattle);
 				this.scene.start('VirusWinsScene');
 			}
 		});
