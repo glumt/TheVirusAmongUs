@@ -946,56 +946,22 @@ class WorldScene extends MultiplayerScene {
 				return
 			}
 
-			// Horizontal movement
-			if (this.cursors.left.isDown) {
+			// Player movement
+			if (this.cursors.left.isDown || this.is_holding.left) {
 				this.container.body.setVelocityX(-50);
 				this.player.anims.play('left', true);
-			}
-			else if (this.cursors.right.isDown) {
+			} else if (this.cursors.right.isDown || this.is_holding.right) {
 				this.container.body.setVelocityX(50);
 				this.player.anims.play('right', true);
-			}
-
-			else if (this.cursors.right.isUp && this.cursors.left.isUp && this.cursors.up.isUp && this.cursors.down.isUp) {
-
-
+            } else if (this.cursors.up.isDown || this.is_holding.up) {
+				this.container.body.setVelocityY(-50);
+				this.player.anims.play('up', true);
+			} else if (this.cursors.down.isDown || this.is_holding.down) {
+				this.container.body.setVelocityY(50);
+				this.player.anims.play('down', true);
+            } else {
 				this.player.anims.play('idle', true);
-			}
-
-			// Vertical movement
-			if (this.cursors.up.isDown) {
-				this.container.body.setVelocityY(-50);
-				this.player.anims.play('up', true);
-			}
-
-
-			else if (this.cursors.down.isDown) {
-				this.container.body.setVelocityY(50);
-				this.player.anims.play('down', true);
-			}
-
-
-			//Move Player sideways in mobile
-            if (this.is_holding.left) {
-				this.container.body.setVelocityX(-50);
-				this.player.anims.play('left', true);
-			}
-            else if (this.is_holding.right) {
-				this.container.body.setVelocityX(50);
-				this.player.anims.play('right', true);
-			}
-
-			//Move Player vertically in mobile
-
-            if (this.is_holding.up) {
-				this.player.anims.play('up', true);
-				this.container.body.setVelocityY(-50);
-
-			}
-            else if (this.is_holding.down) {
-				this.container.body.setVelocityY(50);
-				this.player.anims.play('down', true);
-			}
+            }
 
 			// emit player movement
 			this.emitPlayerMovement()
