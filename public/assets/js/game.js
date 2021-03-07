@@ -60,6 +60,7 @@ class BootScene extends Phaser.Scene {
 }
 
 
+// Class for general mobile code and touch input
 class MultiplayerScene extends Phaser.Scene {
 	constructor(sceneName) {
 		super(sceneName);
@@ -150,6 +151,151 @@ class MultiplayerScene extends Phaser.Scene {
 			x: this.container.x,
 			y: this.container.y,
 		};
+	}
+
+	createMobileControls() {
+
+		let debug = this.add.graphics();
+		debug.fillStyle('0x000000', 0.5);
+		debug.setScrollFactor(0);
+		debug.setDepth(9);
+
+		const screenWidth = 320;
+		const screenHeight = 240;
+
+		var w = 100;
+		var h = 100;
+
+		var y = screenHeight / 2 - h / 2;
+		var x = 0;
+
+		this.zone_left = this.add.zone(0, y, 100, 100);
+		this.zone_left.setOrigin(0.0);
+		this.zone_left.setDepth(10);
+		this.zone_left.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
+
+		x = screenWidth - w;
+
+		this.zone_right = this.add.zone(x, y, 100, 100);
+		this.zone_right.setOrigin(0.0);
+		this.zone_right.setDepth(10);
+		this.zone_right.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
+
+		x = screenWidth / 2 - w / 2;
+		y = 0;
+		this.zone_up = this.add.zone(x, 0, 100, 100);
+		this.zone_up.setOrigin(0.0);
+		this.zone_up.setDepth(10);
+		this.zone_up.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
+
+		y = screenHeight - h;
+		this.zone_down = this.add.zone(x, y, w, h);
+		this.zone_down.setOrigin(0.0);
+		this.zone_down.setDepth(10);
+		this.zone_down.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
+
+		x = 230;
+		y = 210;
+		w = 90;
+		h = 30;
+		this.zone_space = this.add.zone(x, y, w, h);
+		this.zone_space.setOrigin(0.0);
+		this.zone_space.setDepth(10);
+		this.zone_space.setScrollFactor(0);
+		if (GLOBAL_DEBUG) {
+			debug.fillRect(x, y, w, h);
+			console.log(x, y, w, h)
+		}
+
+		// Add input callback
+		this.zone_left.setInteractive();
+		this.zone_left.on('pointerdown', () => { this.goLeft(); });
+		this.zone_left.on('pointerup', () => { this.releaseLeft(); });
+		this.zone_left.on('pointerout', () => { this.releaseLeft(); });
+
+		this.zone_right.setInteractive();
+		this.zone_right.on('pointerdown', () => { this.goRight(); });
+		this.zone_right.on('pointerup', () => { this.releaseRight(); });
+		this.zone_right.on('pointerout', () => { this.releaseRight(); });
+
+		this.zone_up.setInteractive();
+		this.zone_up.on('pointerdown', () => { this.goUp(); });
+		this.zone_up.on('pointerup', () => { this.releaseUp(); });
+		this.zone_up.on('pointerout', () => { this.releaseUp(); });
+
+		this.zone_down.setInteractive();
+		this.zone_down.on('pointerdown', () => { this.goDown(); });
+		this.zone_down.on('pointerup', () => { this.releaseDown(); });
+		this.zone_down.on('pointerout', () => { this.releaseDown(); });
+
+		this.zone_space.setInteractive();
+		this.zone_space.on('pointerdown', () => { this.goSpace(); });
+		this.zone_space.on('pointerup', () => { this.releaseSpace(); });
+		this.zone_space.on('pointerout', () => { this.releaseSpace(); });
+
+		this.is_holding = {
+			left: false,
+			right: false,
+			up: false,
+			down: false,
+			space: false,
+		};
+	}
+
+	goLeft() {
+		this.is_holding.left = true;
+	}
+
+	goRight() {
+		this.is_holding.right = true;
+	}
+
+	goUp() {
+		this.is_holding.up = true;
+	}
+
+	goDown() {
+		this.is_holding.down = true;
+	}
+
+	goSpace() {
+		this.is_holding.space = true;
+	}
+
+	releaseLeft() {
+		this.is_holding.left = false;
+	}
+
+	releaseRight() {
+		this.is_holding.right = false;
+	}
+
+	releaseDown() {
+		this.is_holding.down = false;
+	}
+
+	releaseUp() {
+		this.is_holding.up = false;
+	}
+
+	releaseSpace() {
+		this.is_holding.space = false;
 	}
 }
 
@@ -310,11 +456,6 @@ class LobbyScene extends MultiplayerScene {
 		this.player.setScale(.3);
 		this.player.setSize(16, 32);
 
-		this.direction = {
-			last: false,
-			current: 'down'
-		};
-
 		this.player.setTint(COLORS.PLAYER[playerInfo.colorId])
 		this.player.colorId = playerInfo.colorId;
 
@@ -439,14 +580,6 @@ class WorldScene extends MultiplayerScene {
 
 		// mobile Controls
 		this.createMobileControls();
-		this.is_holding = {
-			left: false,
-			right: false,
-			up: false,
-			down: false,
-			space: false,
-			direction: false,
-		};
 
 		// create enemies
 		this.createStations();
@@ -530,174 +663,6 @@ class WorldScene extends MultiplayerScene {
 		});
 	}
 
-	createMobileControls() {
-
-		let debug = this.add.graphics();
-		debug.fillStyle('0x000000', 0.5);
-		debug.setScrollFactor(0);
-		debug.setDepth(9);
-
-		const screenWidth = 320;
-		const screenHeight = 240;
-
-		var w = 100;
-		var h = 100;
-
-		var y = screenHeight / 2 - h / 2;
-		var x = 0;
-
-		this.zone_left = this.add.zone(0, y, 100, 100);
-		this.zone_left.setOrigin(0.0);
-		this.zone_left.setDepth(10);
-		this.zone_left.setScrollFactor(0);
-		if (GLOBAL_DEBUG) {
-			debug.fillRect(x, y, w, h);
-			console.log(x, y, w, h)
-		}
-
-		x = screenWidth - w;
-
-		this.zone_right = this.add.zone(x, y, 100, 100);
-		this.zone_right.setOrigin(0.0);
-		this.zone_right.setDepth(10);
-		this.zone_right.setScrollFactor(0);
-		if (GLOBAL_DEBUG) {
-			debug.fillRect(x, y, w, h);
-			console.log(x, y, w, h)
-		}
-
-		x = screenWidth / 2 - w / 2;
-		y = 0;
-		this.zone_up = this.add.zone(x, 0, 100, 100);
-		this.zone_up.setOrigin(0.0);
-		this.zone_up.setDepth(10);
-		this.zone_up.setScrollFactor(0);
-		if (GLOBAL_DEBUG) {
-			debug.fillRect(x, y, w, h);
-			console.log(x, y, w, h)
-		}
-
-		y = screenHeight - h;
-		this.zone_down = this.add.zone(x, y, w, h);
-		this.zone_down.setOrigin(0.0);
-		this.zone_down.setDepth(10);
-		this.zone_down.setScrollFactor(0);
-		if (GLOBAL_DEBUG) {
-			debug.fillRect(x, y, w, h);
-			console.log(x, y, w, h)
-		}
-
-		x = 230;
-		y = 210;
-		w = 90;
-		h = 30;
-		this.zone_space = this.add.zone(x, y, w, h);
-		this.zone_space.setOrigin(0.0);
-		this.zone_space.setDepth(10);
-		this.zone_space.setScrollFactor(0);
-		if (GLOBAL_DEBUG) {
-			debug.fillRect(x, y, w, h);
-			console.log(x, y, w, h)
-		}
-
-		// Add input callback
-		this.zone_left.setInteractive();
-		this.zone_left.on('pointerdown', () => { this.goLeft(); });
-		this.zone_left.on('pointerup', () => { this.releaseLeft(); });
-		this.zone_left.on('pointerout', () => { this.releaseLeft(); });
-
-		this.zone_right.setInteractive();
-		this.zone_right.on('pointerdown', () => { this.goRight(); });
-		this.zone_right.on('pointerup', () => { this.releaseRight(); });
-		this.zone_right.on('pointerout', () => { this.releaseRight(); });
-
-		this.zone_up.setInteractive();
-		this.zone_up.on('pointerdown', () => { this.goUp(); });
-		this.zone_up.on('pointerup', () => { this.releaseUp(); });
-		this.zone_up.on('pointerout', () => { this.releaseUp(); });
-
-		this.zone_down.setInteractive();
-		this.zone_down.on('pointerdown', () => { this.goDown(); });
-		this.zone_down.on('pointerup', () => { this.releaseDown(); });
-		this.zone_down.on('pointerout', () => { this.releaseDown(); });
-
-		this.zone_space.setInteractive();
-		this.zone_space.on('pointerdown', () => { this.goSpace(); });
-		this.zone_space.on('pointerup', () => { this.releaseSpace(); });
-		this.zone_space.on('pointerout', () => { this.releaseSpace(); });
-	}
-
-	goLeft() {
-		this.is_holding.left = true;
-		this.is_holding.direction = 'left';
-	}
-
-	goRight() {
-		this.is_holding.right = true;
-		this.is_holding.direction = 'right';
-	}
-
-	goUp() {
-		this.is_holding.up = true;
-		this.is_holding.direction = 'up';
-	}
-
-	goDown() {
-		this.is_holding.down = true;
-		this.is_holding.direction = 'down';
-	}
-
-	goSpace() {
-		this.is_holding.space = true;
-	}
-
-
-
-	releaseLeft() {
-		this.is_holding.left = false;
-		if (this.is_holding.right) {
-			this.is_holding.direction = 'right';
-		}
-		else {
-			this.is_holding.direction = false;
-		}
-	}
-
-
-	releaseRight() {
-		this.is_holding.right = false;
-		if (this.is_holding.left) {
-			this.is_holding.direction = 'left';
-		}
-		else {
-			this.is_holding.direction = false;
-		}
-	}
-
-	releaseDown() {
-		this.is_holding.down = false;
-		if (this.is_holding.up) {
-			this.is_holding.direction = 'up';
-		}
-		else {
-			this.is_holding.direction = false;
-		}
-	}
-
-
-	releaseUp() {
-		this.is_holding.up = false;
-		if (this.is_holding.down) {
-			this.is_holding.direction = 'down';
-		}
-		else {
-			this.is_holding.direction = false;
-		}
-	}
-
-	releaseSpace() {
-		this.is_holding.space = false;
-	}
 
 	createMap() {
 		//Karte wird erstellt
@@ -758,7 +723,7 @@ class WorldScene extends MultiplayerScene {
 		});
 
 
-		//Erzeugen der Spieler-Animation 
+		//Erzeugen der Spieler-Animation
 		this.anims.create({
 			key: 'left',
 			frames: this.anims.generateFrameNumbers('LCDTyp', { start: 23, end: 27 }),
@@ -1009,23 +974,23 @@ class WorldScene extends MultiplayerScene {
 
 
 			//Move Player sideways in mobile
-			if (this.is_holding.direction === 'left') {
+            if (this.is_holding.left) {
 				this.container.body.setVelocityX(-50);
 				this.player.anims.play('left', true);
 			}
-			else if (this.is_holding.direction === 'right') {
+            else if (this.is_holding.right) {
 				this.container.body.setVelocityX(50);
 				this.player.anims.play('right', true);
 			}
 
 			//Move Player vertically in mobile
 
-			if (this.is_holding.direction === 'up') {
+            if (this.is_holding.up) {
 				this.player.anims.play('up', true);
 				this.container.body.setVelocityY(-50);
 
 			}
-			else if (this.is_holding.direction === 'down') {
+            else if (this.is_holding.down) {
 				this.container.body.setVelocityY(50);
 				this.player.anims.play('down', true);
 			}
