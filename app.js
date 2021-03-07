@@ -333,7 +333,6 @@ function keyGenerator() {
 	return code;
 }
 
-/*
 // catch all other routes
 app.use((req, res, next) => {
 	res.status(404).json({ message: '404 - Not Found' });
@@ -344,9 +343,15 @@ app.use((err, req, res, next) => {
 	console.log(err.message);
 	res.status(err.status || 500).json({ error: err.message });
 });
-*/
 
 // have the server start listening on the provided port
 server.listen(process.env.PORT || 3000, () => {
 	console.log(`Server started on port ${process.env.PORT || 3000}`);
 });
+
+//Error handler
+process.on('uncaughtException', function (exception) {
+  // handle or ignore error
+  console.log(exception);
+});
+
