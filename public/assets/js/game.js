@@ -430,6 +430,8 @@ class LobbyScene extends MultiplayerScene {
 
 		this.createLobbyMap();
 
+		this.createMobileControls();
+
 		this.cursors = this.input.keyboard.createCursorKeys();
 
 		initBoxes(this, COLORS.MAIN_BOX, COLORS.MAIN_BOX_BORDER);
@@ -484,21 +486,21 @@ class LobbyScene extends MultiplayerScene {
 
 	update(time, delta) {
 		if (this.container) {
-			if (this.cursors.left.isDown) {
+			if (this.cursors.left.isDown || this.is_holding.left) {
 				this.container.body.setVelocityX(-40);
 				//this.player.anims.play('walk', true);
 			}
-			else if (this.cursors.right.isDown) {
+			else if (this.cursors.right.isDown || this.is_holding.right) {
 				this.container.body.setVelocityX(40);
 				//this.player.anims.play('walk', true);
 			}
 
 			// Vertical movement
-			if (this.cursors.up.isDown) {
+			if (this.cursors.up.isDown || this.is_holding.up) {
 				this.container.body.setVelocityY(-40);
 				//this.player.anims.play('walk', true);
 			}
-			else if (this.cursors.down.isDown) {
+			else if (this.cursors.down.isDown || this.is_holding.down) {
 				this.container.body.setVelocityY(40);
 				//this.player.anims.play('walk', true);
 			}
