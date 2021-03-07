@@ -430,7 +430,7 @@ class LobbyScene extends MultiplayerScene {
 
 		this.createLobbyMap();
 
-		this.createMobileControls();
+		//this.createMobileControls();
 
 		this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -469,6 +469,11 @@ class LobbyScene extends MultiplayerScene {
 		this.container.body.setBounce(1);
 		this.container.body.setCollideWorldBounds(true);
 
+        const playerSpeed = 40;
+        const signX = (Math.random()>0.5)? 1 : -1;
+        const signY = (Math.random()>0.5)? 1 : -1;
+        this.container.body.setVelocityX(signX * playerSpeed);
+        this.container.body.setVelocityY(signY * playerSpeed);
 		// create start button when player is ready
 		this.createStartButton();
 	}
@@ -486,6 +491,7 @@ class LobbyScene extends MultiplayerScene {
 
 	update(time, delta) {
 		if (this.container) {
+/*
 			if (this.cursors.left.isDown || this.is_holding.left) {
 				this.container.body.setVelocityX(-40);
 				//this.player.anims.play('walk', true);
@@ -504,6 +510,7 @@ class LobbyScene extends MultiplayerScene {
 				this.container.body.setVelocityY(40);
 				//this.player.anims.play('walk', true);
 			}
+*/
 
 			this.timer += delta;
 			while (this.timer > 1000) {
