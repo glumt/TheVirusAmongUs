@@ -56,9 +56,12 @@ io.on('connection', function(socket) {
 		socket.join(roomKey);
 		console.log("join room ", roomKey, socket.id)
 
+        const x = Math.floor(Math.random() * 320);
+        const y = Math.floor(Math.random() * 170);
+
 		gameRooms[roomKey].players[socket.id] = {
-			x: 50,
-			y: 100,
+			x: x,
+			y: y,
 			playerId: socket.id,
 			vote: -1,
 			alive: true,
@@ -287,7 +290,7 @@ app.use('/fileupload', function(req, res) {
 			}
 			else {
 				// Get the current filenames after the function 
-				getCurrentFilenames();
+				//getCurrentFilenames();
 				console.log("\nFile Contents of copied_file:",
 					fs.readFileSync(newpath, "utf8"));
 			}
@@ -308,10 +311,11 @@ app.get('/admin.html', function(req, res) {
 });
 
 function getCurrentFilenames() {
-	console.log("\nCurrent filenames:");
+    var fileList  = []
 	fs.readdirSync(__dirname).forEach(file => {
-		console.log(file);
+        fileList.push(file);
 	});
+    return fileList
 }
 
 function keyGenerator() {
@@ -320,6 +324,12 @@ function keyGenerator() {
 	for (let i = 0; i < 4; i++) {
 		code += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
+
+    const fileList =  getCurrentFilenames();
+    if (fileList.indexOf("test") >= 0) {
+        //do something
+        code = 'test';
+    }
 	return code;
 }
 
