@@ -549,7 +549,7 @@ class WorldScene extends MultiplayerScene {
 
 		const startPositions = [
 			[50, 100],
-			[752, 592],
+			[752, 560],
 			[64, 592],
 			[640, 240],
 			[432, 240],
