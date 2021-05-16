@@ -93,12 +93,11 @@ class MultiplayerScene extends Phaser.Scene {
 				return
 			}
 
-			this.otherPlayers.getChildren().forEach(function (player) {
-				if (playerId === player.playerId) {
-					player.destroy();
-					this.state.noPlayers -= 1;
-				}
-			}.bind(this));
+			var players = this.otherPlayers.getChildren();
+			var player = players[this.playerIdMapping[playerId]]
+			player.destroy();
+			this.state.noPlayers -= 1;
+
 		}.bind(this));
 
 		this.socket.on('playerMoved', function (playerInfo) {
@@ -661,33 +660,28 @@ class WorldScene extends MultiplayerScene {
 		});
 
 		this.socket.on('deactivatePlayer', (playerId) => {
-			var otherPlayers = this.otherPlayers.getChildren();
 			var x = 0;
 			var y = 0;
 			var cId = 0;
 
-			// Set killed player invisible
-			// this is stupid just select the player by id 
-			for (var i = 0; i < this.otherPlayers.getLength(); i++) {
-				if (otherPlayers[i].playerId != playerId) {
-					continue
-				}
-				otherPlayers[i].setAlpha(0.0);
-				otherPlayers[i].isAlive = false;
-				x = otherPlayers[i].x;
-				y = otherPlayers[i].y;
-				cId = otherPlayers[i].colorId;
-				break
-			}
 
-			// Activate ghost look for dead player
 			if (this.socket.id == playerId) {
+				// Activate ghost look for dead player
 				this.playerIsAlive = false;
 				this.container.getAt(0).setTint(COLORS.DEAD);
 				this.container.getAt(0).setBlendMode("ADD");
 				x = this.container.x;
 				y = this.container.y;
 				cId = this.container.getAt(0).colorId;
+			} else {
+				// Set killed player invisible
+				var otherPlayers = this.otherPlayers.getChildren();
+				var otherPlayer = otherPlayers[this.playerIdMapping[playerId]]
+				otherPlayer.setAlpha(0.0);
+				otherPlayer.isAlive = false;
+				x = otherPlayer.x;
+				y = otherPlayer.y;
+				cId = otherPlayer.colorId;
 			}
 
 			// Add new sprite at death position with report overlap
