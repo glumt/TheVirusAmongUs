@@ -65,7 +65,7 @@ class MultiplayerScene extends Phaser.Scene {
 	constructor(sceneName) {
 		super(sceneName);
 		this.state = {};
-		this.playersCreated = false;
+		this.playAnimation = false;
 		this.playerIdMapping = {};
 	}
 
@@ -111,21 +111,23 @@ class MultiplayerScene extends Phaser.Scene {
 			player.setPosition(playerInfo.x, playerInfo.y);
 
 			// Player movement; Velocity given in pixel per second
-			switch (playerInfo.direction) {
-				case 'left':
-					player.anims.play('left', true);
-					break;
-				case 'right':
-					player.anims.play('right', true);
-					break;
-				case 'up':
-					player.anims.play('up', true);
-					break;
-				case 'down':
-					player.anims.play('down', true);
-					break;
-				default:
-					player.anims.play('idle', true);
+			if (this.playAnimation) {
+				switch (playerInfo.direction) {
+					case 'left':
+						player.anims.play('left', true);
+						break;
+					case 'right':
+						player.anims.play('right', true);
+						break;
+					case 'up':
+						player.anims.play('up', true);
+						break;
+					case 'down':
+						player.anims.play('down', true);
+						break;
+					default:
+						player.anims.play('idle', true);
+				}
 			}
 		}.bind(this));
 
@@ -571,6 +573,7 @@ class WorldScene extends MultiplayerScene {
 		this.blockTask = false;
 		this.finishedTasks = [];
 		this.updateCounter = 0;
+		this.playAnimation = true;
 	}
 
 	initStartPosition(players) {
