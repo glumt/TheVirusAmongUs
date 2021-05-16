@@ -65,27 +65,35 @@ class MultiplayerScene extends Phaser.Scene {
 	constructor(sceneName) {
 		super(sceneName);
 		this.state = {};
+		this.playersCreated = false;
+		this.playerIdMapping = {};
 	}
 
 	// Partial class which not works on its own
 	createMultiplayerIO() {
 
+		this.socket.on("pong", (pingTimestamp) => {
+			var pongTimestamp = Date.now();
+			var ping = pongTimestamp - pingTimestamp;
+			this.events.emit('ping', ping);
+		});
+
 		this.otherPlayers = this.physics.add.group();
 
-		this.socket.on('currentPlayers', function(data) {
+		this.socket.on('currentPlayers', function (data) {
 			this.createAllPlayers(data.players);
 		}.bind(this));
 
-		this.socket.on('newPlayer', function(data) {
+		this.socket.on('newPlayer', function (data) {
 			this.addOtherPlayers(data.players);
 		}.bind(this));
 
-		this.socket.on('disconnectPlayer', function(playerId) {
+		this.socket.on('disconnectPlayer', function (playerId) {
 			if (!this.sys.isActive()) {
 				return
 			}
 
-			this.otherPlayers.getChildren().forEach(function(player) {
+			this.otherPlayers.getChildren().forEach(function (player) {
 				if (playerId === player.playerId) {
 					player.destroy();
 					this.state.noPlayers -= 1;
@@ -93,19 +101,35 @@ class MultiplayerScene extends Phaser.Scene {
 			}.bind(this));
 		}.bind(this));
 
-		this.socket.on('playerMoved', function(playerInfo) {
+		this.socket.on('playerMoved', function (playerInfo) {
 			if (!this.sys.isActive()) {
 				return
 			}
 
-			this.otherPlayers.getChildren().forEach(function(player) {
-				if (playerInfo.playerId === player.playerId) {
-					player.setPosition(playerInfo.x, playerInfo.y);
-				}
-			}.bind(this));
+			var players = this.otherPlayers.getChildren();
+			var player = players[this.playerIdMapping[playerInfo.playerId]]
+			player.setPosition(playerInfo.x, playerInfo.y);
+
+			// Player movement; Velocity given in pixel per second
+			switch (playerInfo.direction) {
+				case 'left':
+					player.anims.play('left', true);
+					break;
+				case 'right':
+					player.anims.play('right', true);
+					break;
+				case 'up':
+					player.anims.play('up', true);
+					break;
+				case 'down':
+					player.anims.play('down', true);
+					break;
+				default:
+					player.anims.play('idle', true);
+			}
 		}.bind(this));
 
-		this.socket.on('startGame', function(gameInfo) {
+		this.socket.on('startGame', function (gameInfo) {
 			this.scene.stop('LobbyScene');
 			this.state.virusID = gameInfo.virusID;
 
@@ -137,14 +161,17 @@ class MultiplayerScene extends Phaser.Scene {
 		otherPlayer.playerId = playerInfo.playerId;
 		otherPlayer.isAlive = true;
 		this.otherPlayers.add(otherPlayer);
+
+		var noOtherPlayers = this.otherPlayers.getLength() - 1;
+		this.playerIdMapping[otherPlayer.playerId] = noOtherPlayers;
 	}
 
-	emitPlayerMovement() {
+	emitPlayerMovement(dir) {
 		var x = this.container.x;
 		var y = this.container.y;
 
 		if (this.container.oldPosition && (x !== this.container.oldPosition.x || y !== this.container.oldPosition.y)) {
-			this.socket.emit('playerMovement', { x: this.container.x, y: this.container.y, roomKey: this.state.roomKey });
+			this.socket.emit('playerMovement', { x: this.container.x, y: this.container.y, roomKey: this.state.roomKey, dir: dir });
 		}
 		// save old position data
 		this.container.oldPosition = {
@@ -342,7 +369,7 @@ class StartScene extends Phaser.Scene {
 		this.inputElement.createFromCache("roomform");
 		this.inputElement.addListener("click");
 		this.inputElement.setScale(0.8)
-		this.inputElement.on("click", function(event) {
+		this.inputElement.on("click", function (event) {
 			if (event.target.name === "enterRoom") {
 				const input = this.inputElement.getChildByName("roomform");
 				this.socket.emit("isKeyValid", input.value);
@@ -354,13 +381,13 @@ class StartScene extends Phaser.Scene {
 		this.roomKeyText = this.add.text(inX, inY, "", textStyle);
 		this.roomKeyText.setOrigin(0.5);
 
-		this.socket.on("roomCreated", function(roomKey) {
+		this.socket.on("roomCreated", function (roomKey) {
 			this.roomKey = roomKey,
 				this.roomKeyText.setText(this.roomKey);
 			this.createJoinButton();
 		}.bind(this));
 
-		this.socket.on("keyNotValid", function() {
+		this.socket.on("keyNotValid", function () {
 			this.notValidText.setText("Invalid room key");
 		}.bind(this));
 
@@ -469,11 +496,11 @@ class LobbyScene extends MultiplayerScene {
 		this.container.body.setBounce(1);
 		this.container.body.setCollideWorldBounds(true);
 
-        const playerSpeed = 40;
-        const signX = (Math.random()>0.5)? 1 : -1;
-        const signY = (Math.random()>0.5)? 1 : -1;
-        this.container.body.setVelocityX(signX * playerSpeed);
-        this.container.body.setVelocityY(signY * playerSpeed);
+		const playerSpeed = 40;
+		const signX = (Math.random() > 0.5) ? 1 : -1;
+		const signY = (Math.random() > 0.5) ? 1 : -1;
+		this.container.body.setVelocityX(signX * playerSpeed);
+		this.container.body.setVelocityY(signY * playerSpeed);
 		// create start button when player is ready
 		this.createStartButton();
 	}
@@ -491,26 +518,26 @@ class LobbyScene extends MultiplayerScene {
 
 	update(time, delta) {
 		if (this.container) {
-/*
-			if (this.cursors.left.isDown || this.is_holding.left) {
-				this.container.body.setVelocityX(-40);
-				//this.player.anims.play('walk', true);
-			}
-			else if (this.cursors.right.isDown || this.is_holding.right) {
-				this.container.body.setVelocityX(40);
-				//this.player.anims.play('walk', true);
-			}
-
-			// Vertical movement
-			if (this.cursors.up.isDown || this.is_holding.up) {
-				this.container.body.setVelocityY(-40);
-				//this.player.anims.play('walk', true);
-			}
-			else if (this.cursors.down.isDown || this.is_holding.down) {
-				this.container.body.setVelocityY(40);
-				//this.player.anims.play('walk', true);
-			}
-*/
+			/*
+						if (this.cursors.left.isDown || this.is_holding.left) {
+							this.container.body.setVelocityX(-40);
+							//this.player.anims.play('walk', true);
+						}
+						else if (this.cursors.right.isDown || this.is_holding.right) {
+							this.container.body.setVelocityX(40);
+							//this.player.anims.play('walk', true);
+						}
+			
+						// Vertical movement
+						if (this.cursors.up.isDown || this.is_holding.up) {
+							this.container.body.setVelocityY(-40);
+							//this.player.anims.play('walk', true);
+						}
+						else if (this.cursors.down.isDown || this.is_holding.down) {
+							this.container.body.setVelocityY(40);
+							//this.player.anims.play('walk', true);
+						}
+			*/
 
 			this.timer += delta;
 			while (this.timer > 1000) {
@@ -543,6 +570,7 @@ class WorldScene extends MultiplayerScene {
 		this.playerIsAlive = true;
 		this.blockTask = false;
 		this.finishedTasks = [];
+		this.updateCounter = 0;
 	}
 
 	initStartPosition(players) {
@@ -562,7 +590,7 @@ class WorldScene extends MultiplayerScene {
 		Object.keys(players).forEach((id) => {
 			players[id].x = startPositions[i][0];
 			players[id].y = startPositions[i][1];
-			i+=1;
+			i += 1;
 		});
 		return players
 	}
@@ -599,6 +627,7 @@ class WorldScene extends MultiplayerScene {
 
 		this.createAllPlayers(this.initPlayers);
 		this.events.emit('setNoTasks', this.noTasks);
+
 	}
 
 	createGameIO() {
@@ -946,6 +975,12 @@ class WorldScene extends MultiplayerScene {
 	// Scene updates
 	update() {
 
+		if (this.updateCounter > 5) {
+			this.socket.emit('ping', { ts: Date.now() });
+			this.updateCounter = 0;
+		}
+		this.updateCounter += 1;
+
 		if (this.container) {
 			this.container.body.setVelocity(0);
 
@@ -953,25 +988,34 @@ class WorldScene extends MultiplayerScene {
 				return
 			}
 
-			// Player movement
+			var direction = 'idle'
+
+			// Player movement; Velocity given in pixel per second
 			if (this.cursors.left.isDown || this.is_holding.left) {
 				this.container.body.setVelocityX(-50);
 				this.player.anims.play('left', true);
+				direction = 'left'
 			} else if (this.cursors.right.isDown || this.is_holding.right) {
 				this.container.body.setVelocityX(50);
 				this.player.anims.play('right', true);
-            } else if (this.cursors.up.isDown || this.is_holding.up) {
+				direction = 'right'
+			} else if (this.cursors.right.isDown || this.is_holding.right) {
+			} else if (this.cursors.up.isDown || this.is_holding.up) {
 				this.container.body.setVelocityY(-50);
 				this.player.anims.play('up', true);
+				direction = 'up'
+			} else if (this.cursors.right.isDown || this.is_holding.right) {
 			} else if (this.cursors.down.isDown || this.is_holding.down) {
 				this.container.body.setVelocityY(50);
 				this.player.anims.play('down', true);
-            } else {
+				direction = 'down'
+			} else if (this.cursors.right.isDown || this.is_holding.right) {
+			} else {
 				this.player.anims.play('idle', true);
-            }
+			}
 
 			// emit player movement
-			this.emitPlayerMovement()
+			this.emitPlayerMovement(direction)
 		}
 	}
 }
@@ -1059,6 +1103,15 @@ class UIScene extends Phaser.Scene {
 		ourGame.events.on('disableReport', () => {
 			this.reportBox.setVisible(false)
 			this.reportText.setVisible(false)
+		});
+
+		this.pingText = this.add.text(220, 5, 'Ping:', { font: '14px Courier', fill: '#00ff00' });
+		ourGame.events.on('ping', (ping) => {
+			if (ping > 999) {
+				ping = 999;
+			}
+			var num = new Intl.NumberFormat('de-DE', { minimumIntegerDigits: 3, useGrouping: false }).format(ping)
+			this.pingText.setText(['Ping: ' + num + ' ms']);
 		});
 	}
 
@@ -1460,15 +1513,15 @@ class TaskScenePairs extends TaskScene {
 
 		this.input.dragDistanceThreshold = 16;
 
-		this.input.on('dragstart', function(pointer, gameObject) {
+		this.input.on('dragstart', function (pointer, gameObject) {
 		});
 
-		this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
+		this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
 			gameObject.x = dragX;
 			gameObject.y = dragY;
 		});
 
-		this.input.on('dragend', function(pointer, gameObject) {
+		this.input.on('dragend', function (pointer, gameObject) {
 		});
 	}
 
@@ -1667,15 +1720,15 @@ class TaskSceneGroup extends TaskScene {
 
 		this.input.dragDistanceThreshold = 16;
 
-		this.input.on('dragstart', function(pointer, gameObject) {
+		this.input.on('dragstart', function (pointer, gameObject) {
 		});
 
-		this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
+		this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
 			gameObject.x = dragX;
 			gameObject.y = dragY;
 		});
 
-		this.input.on('dragend', function(pointer, gameObject) {
+		this.input.on('dragend', function (pointer, gameObject) {
 		});
 
 
@@ -1794,15 +1847,15 @@ class TaskSceneOrder extends TaskScene {
 
 		this.input.dragDistanceThreshold = 16;
 
-		this.input.on('dragstart', function(pointer, gameObject) {
+		this.input.on('dragstart', function (pointer, gameObject) {
 		});
 
-		this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
+		this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
 			gameObject.x = dragX;
 			gameObject.y = dragY;
 		});
 
-		this.input.on('dragend', function(pointer, gameObject) {
+		this.input.on('dragend', function (pointer, gameObject) {
 		});
 
 		this.createAbortButton()
@@ -1966,6 +2019,7 @@ var config = {
 	parent: 'content',
 	width: 320,
 	height: 240,
+	fps: 30,
 	zoom: 2,
 	pixelArt: true,
 	physics: {
@@ -1983,3 +2037,4 @@ var config = {
 };
 
 var game = new Phaser.Game(config);
+

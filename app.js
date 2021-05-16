@@ -21,11 +21,16 @@ var gameRooms = {
 
 const noTasksPerPlayer = 5;
 
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
 	console.log('a user connected: ', socket.id);
 
+	// debugging ping
+	socket.on('ping', function (data) {
+		socket.emit('pong', data.ts);
+	});
+
 	// Waiting room communication
-	socket.on("isKeyValid", function(input) {
+	socket.on("isKeyValid", function (input) {
 		console.log(input)
 
 		if (input in gameRooms) {
@@ -35,7 +40,7 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	socket.on("getRoomKey", async function() {
+	socket.on("getRoomKey", async function () {
 		let key = keyGenerator();
 
 		if (!(key in gameRooms)) {
@@ -48,6 +53,7 @@ io.on('connection', function(socket) {
 				ready: {},
 				noPlayers: 0,
 			};
+			console.log("Create game room: ", key)
 		};
 		socket.emit("roomCreated", key);
 	});
@@ -56,8 +62,8 @@ io.on('connection', function(socket) {
 		socket.join(roomKey);
 		console.log("join room ", roomKey, socket.id)
 
-        const x = Math.floor(Math.random() * 320);
-        const y = Math.floor(Math.random() * 170);
+		const x = Math.floor(Math.random() * 320);
+		const y = Math.floor(Math.random() * 170);
 
 		gameRooms[roomKey].players[socket.id] = {
 			x: x,
@@ -65,6 +71,7 @@ io.on('connection', function(socket) {
 			playerId: socket.id,
 			vote: -1,
 			alive: true,
+			direction: 'idle',
 		};
 		gameRooms[roomKey].noPlayers = Object.keys(gameRooms[roomKey].players).length;
 		gameRooms[roomKey].players[socket.id].colorId = gameRooms[roomKey].noPlayers;
@@ -86,7 +93,7 @@ io.on('connection', function(socket) {
 	// Lobby
 
 	// Check if all players are ready to play
-	socket.on('playerReady', function(roomKey) {
+	socket.on('playerReady', function (roomKey) {
 
 		gameRooms[roomKey].ready[socket.id] = true;
 		var allReady = Object.values(gameRooms[roomKey].ready).reduce((a, item) => a && item, true);
@@ -106,20 +113,25 @@ io.on('connection', function(socket) {
 		}
 	});
 
-	socket.on('resetScene', function() {
+	socket.on('resetScene', function () {
 		socket.emit('currentPlayers', players);
 	});
 
 	// Game Communication
-	socket.on('playerMovement', function(movementData) {
+	socket.on('playerMovement', function (movementData) {
 		//console.log(movementData)
 		gameRooms[movementData.roomKey].players[socket.id].x = movementData.x;
 		gameRooms[movementData.roomKey].players[socket.id].y = movementData.y;
+		gameRooms[movementData.roomKey].players[socket.id].direction = movementData.dir;
 		// emit a message to all players about the player that moved
+		/*
+		console.log(gameRooms[movementData.roomKey].players[socket.id])
+		console.log("sending: " + memorySizeOf(gameRooms[movementData.roomKey].players[socket.id]))
+		*/
 		socket.broadcast.to(movementData.roomKey).emit('playerMoved', gameRooms[movementData.roomKey].players[socket.id]);
 	});
 
-	socket.on('taskComplete', function(roomKey) {
+	socket.on('taskComplete', function (roomKey) {
 		gameRooms[roomKey].gameScore += 1
 
 		// emit number of completed tasks
@@ -132,11 +144,11 @@ io.on('connection', function(socket) {
 	});
 
 	// virus kills
-	socket.on('reportKill', function(data) {
+	socket.on('reportKill', function (data) {
 		io.in(data.roomKey).emit('startVote', gameRooms[data.roomKey].players)
 	});
 
-	socket.on('killPlayer', function(data) {
+	socket.on('killPlayer', function (data) {
 		gameRooms[data.roomKey].players[data.playerId].alive = false;
 		io.in(data.roomKey).emit('deactivatePlayer', data.playerId)
 
@@ -160,7 +172,7 @@ io.on('connection', function(socket) {
 	});
 
 	// Voting
-	socket.on('vote', function(data) {
+	socket.on('vote', function (data) {
 		console.log(data)
 
 		gameRooms[data.roomKey].players[socket.id].vote = data.vote;
@@ -237,7 +249,7 @@ io.on('connection', function(socket) {
 
 	// Other Communication
 	// when a player disconnects, remove them from our players object
-	socket.on('disconnecting', function() {
+	socket.on('disconnecting', function () {
 
 		let roomKey = 0;
 		// remove from game object
@@ -245,18 +257,28 @@ io.on('connection', function(socket) {
 			if (roomKey != socket.id) {
 				delete gameRooms[roomKey].ready[socket.id];
 				delete gameRooms[roomKey].players[socket.id];
+				gameRooms[roomKey].noPlayers = gameRooms[roomKey].noPlayers - 1;
 
 				// emit a message to all players to remove this player
 				io.in(roomKey).emit('disconnectPlayer', socket.id);
+				console.log('user disconnected: ', socket.id);
+
+				// close game room if no players are present
+				if (gameRooms[roomKey].noPlayers == 0) {
+					delete gameRooms[roomKey];
+					console.log('close game room: ', roomKey);
+				}
+				break
 			}
 		}
-		console.log('user disconnected: ', socket.id);
 	});
 });
 
 // update express settings
+/*
 app.use(bodyParser.urlencoded({ extended: false })); // parse application/x-www-form-urlencoded
 app.use(bodyParser.json()); // parse application/json
+*/
 app.use(cookieParser());
 
 app.use(express.static(__dirname + '/public'));
@@ -268,15 +290,15 @@ app.get('/game.html', passport.authenticate('jwt', { session : false }), functio
 });
 */
 
-app.get('/game.html', function(req, res) {
+app.get('/game.html', function (req, res) {
 	res.sendFile(__dirname + '/public/index.html');
 	//res.sendFile(__dirname + '/index.html');
 });
 
-app.use('/fileupload', function(req, res) {
+app.use('/fileupload', function (req, res) {
 
 	var form = new formidable.IncomingForm();
-	form.parse(req, function(err, fields, files) {
+	form.parse(req, function (err, fields, files) {
 		// oldpath : temporary folder to which file is saved to
 		//console.log(files)
 		var oldpath = files.filetoupload.path;
@@ -305,17 +327,17 @@ app.use('/fileupload', function(req, res) {
 });
 
 
-app.get('/admin.html', function(req, res) {
+app.get('/admin.html', function (req, res) {
 	res.sendFile(__dirname + '/public/admin.html');
 	//res.sendFile(__dirname + '/index.html');
 });
 
 function getCurrentFilenames() {
-    var fileList  = []
+	var fileList = []
 	fs.readdirSync(__dirname).forEach(file => {
-        fileList.push(file);
+		fileList.push(file);
 	});
-    return fileList
+	return fileList
 }
 
 function keyGenerator() {
@@ -325,11 +347,11 @@ function keyGenerator() {
 		code += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
 
-    const fileList =  getCurrentFilenames();
-    if (fileList.indexOf("test") >= 0) {
-        //do something
-        code = 'test';
-    }
+	const fileList = getCurrentFilenames();
+	if (fileList.indexOf("test") >= 0) {
+		//do something
+		code = 'test';
+	}
 	return code;
 }
 
@@ -351,7 +373,46 @@ server.listen(process.env.PORT || 3000, () => {
 
 //Error handler
 process.on('uncaughtException', function (exception) {
-  // handle or ignore error
-  console.log(exception);
+	// handle or ignore error
+	console.log(exception);
 });
 
+
+function memorySizeOf(obj) {
+	var bytes = 0;
+
+	function sizeOf(obj) {
+		if (obj !== null && obj !== undefined) {
+			switch (typeof obj) {
+				case 'number':
+					bytes += 8;
+					break;
+				case 'string':
+					bytes += obj.length * 2;
+					break;
+				case 'boolean':
+					bytes += 4;
+					break;
+				case 'object':
+					var objClass = Object.prototype.toString.call(obj).slice(8, -1);
+					if (objClass === 'Object' || objClass === 'Array') {
+						for (var key in obj) {
+							if (!obj.hasOwnProperty(key)) continue;
+							sizeOf(obj[key]);
+						}
+					} else bytes += obj.toString().length * 2;
+					break;
+			}
+		}
+		return bytes;
+	};
+
+	function formatByteSize(bytes) {
+		if (bytes < 1024) return bytes + " bytes";
+		else if (bytes < 1048576) return (bytes / 1024).toFixed(3) + " KiB";
+		else if (bytes < 1073741824) return (bytes / 1048576).toFixed(3) + " MiB";
+		else return (bytes / 1073741824).toFixed(3) + " GiB";
+	};
+
+	return formatByteSize(sizeOf(obj));
+};
