@@ -290,7 +290,7 @@ app.get('/game.html', passport.authenticate('jwt', { session : false }), functio
 });
 */
 
-app.get('/game.html', function (req, res) {
+app.get('/game', function (req, res) {
 	res.sendFile(__dirname + '/public/index.html');
 	//res.sendFile(__dirname + '/index.html');
 });
