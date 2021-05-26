@@ -327,9 +327,8 @@ app.use('/fileupload', function (req, res) {
 });
 
 
-app.get('/admin.html', function (req, res) {
+app.get('/admin', function (req, res) {
 	res.sendFile(__dirname + '/public/admin.html');
-	//res.sendFile(__dirname + '/index.html');
 });
 
 function getCurrentFilenames() {
