@@ -2,7 +2,7 @@
   "name": "thevirusamongus",
   "version": "1.0.0",
   "description": "An educational version of Among Us with customizable tasks in a computer virus setting",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "test"
   },
