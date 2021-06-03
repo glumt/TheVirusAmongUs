@@ -30,7 +30,8 @@
     "formidable": "^1.2.2",
     "fs": "^0.0.1-security",
     "phaser": "^3.50.1",
-    "socket.io": "^3.0.4"
+    "socket.io": "^3.0.4",
+    "webfontloader": "^1.6.28"
   },
   "devDependencies": {
     "webpack": "^5.11.0"

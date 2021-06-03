@@ -11,7 +11,7 @@
         "group1": "Nomen",
         "items1": ["APFEL", "BAUM", "STRAND", "MANN", "LIEBE"],
         "group2": "Verben",
-        "items2": ["Springen", "Singen", "Tanzen", "Lachen", "Klatschen"]
+        "items2": ["SPRINGEN", "SINGEN", "TANZEN", "LACHEN", "KLATSCHEN"]
     },
     "task3": {
         "taskType": "order",
@@ -20,23 +20,23 @@
     },
     "task4": {
         "taskType": "pairs",
-        "question": "Was war wann?",
-        "part1": ["Roms Gründung", "Rom hat die stärkste Arme", "Varusschlacht", "Größte Ausdehnung", "Attila greift an"],
-        "part2": ["754 v.Chr.", "200 v.Chr.", "9 v.Chr.", "116 v.Chr.", "450 v.Chr."]
+        "question": "Finde die Reime",
+        "part1": ["Festplatte", "Monitor", "Kabel", "Taste", "Maus"],
+        "part2": ["Isomatte", "Labor", "Fabel", "Paste", "Haus"]
     },
     "task5": {
         "taskType": "group",
         "question": "Sortiere!",
-        "group1": "Römer",
-        "items1": ["Pilum", "Tunika", "Caliga", "Katapult", "Phalanx"],
-        "group2": "Germanen",
-        "items2": ["Speer", "ovales Schild", "Lederrüstung", "Wurfaxt", "Horde"]
+        "group1": "Hardware",
+        "items1": ["Monitor", "Rechner", "Maus", "Tastatur", "Boxen"],
+        "group2": "Software",
+        "items2": ["Word", "Paint", "Photoshop", "Firefox", "VLC-Player"]
     },
     "task6": {
         "taskType": "order",
-        "question": "Reihenfolge römischer Herrscher",
-        "items": ["Ceaser", "Augustus", "Nero", "Titus", "Konstantin"]
-    },
+        "question": "Sortiere aufsteigend nach Größe",
+        "items": ["5MB", "500MB", "2GB", "0,5TB", "3B"]
+	},
     "task7": {
         "taskType": "pairs",
         "question": "Rechne!",

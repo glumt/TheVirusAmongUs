@@ -1,3 +1,5 @@
+
+
 const GLOBAL_DEBUG = false;
 const COLORS = {
 	MAIN_BOX: Phaser.Display.Color.GetColor(7, 14, 145),
@@ -18,6 +20,46 @@ const COLORS = {
 		8: Phaser.Display.Color.GetColor(64, 40, 64),		//schwarz
 	}
 };
+
+
+
+class WebFontFile extends Phaser.Loader.File {
+	/**
+	 * @param {Phaser.Loader.LoaderPlugin} loader
+	 * @param {string | string[]} fontNames
+	 * @param {string} [service]
+	 */
+	constructor(loader, fontNames, service = 'google') {
+		super(loader, {
+			type: 'webfont',
+			key: fontNames.toString()
+		})
+
+		this.fontNames = Array.isArray(fontNames) ? fontNames : [fontNames]
+		this.service = service
+	}
+
+	load() {
+		const config = {
+			active: () => {
+				this.loader.nextFile(this, true)
+			}
+		}
+
+		switch (this.service) {
+			case 'google':
+				config['google'] = {
+					families: this.fontNames
+				}
+				break
+
+			default:
+				throw new Error('Unsupported font service')
+		}
+
+		WebFontLoader.load(config)
+	}
+}
 
 
 class BootScene extends Phaser.Scene {
@@ -339,6 +381,7 @@ class StartScene extends Phaser.Scene {
 
 	preload() {
 		this.load.html("roomform", "assets/text/codeform.html");
+		this.load.addFile(new WebFontFile(this.load, 'Press Start 2P'))
 	}
 
 	create() {
@@ -402,7 +445,8 @@ class StartScene extends Phaser.Scene {
 		const titlePosX = this.physics.world.bounds.width / 2;
 		const titlePosY = 30;
 
-		const titleLine1 = this.add.text(titlePosX, titlePosY, "THE V!RUS", { fontFamily: "Arial Black", fontSize: 36 });
+		//const titleLine1 = this.add.text(titlePosX, titlePosY, "THE V!RUS", { fontFamily: "Arial Black", fontSize: 36 });
+		const titleLine1 = this.add.text(titlePosX, titlePosY, "THE V!RUS", { fontFamily: "Press Start 2P", fontSize: 36 });
 		titleLine1.setOrigin(0.5);
 		titleLine1.setStroke('#000000', 4);
 		const gradient = titleLine1.context.createLinearGradient(0, 0, 0, titleLine1.height);
@@ -423,7 +467,7 @@ class StartScene extends Phaser.Scene {
 	createJoinButton() {
 		this.notValidText.setText("");
 
-		const textStyle = { color: COLORS.UI_TEXT, fontSize: "12px", fintStyle: "bold", align: "center" };
+		const textStyle = { color: COLORS.UI_TEXT, fontSize: "12px", fontStyle: "bold", align: "center" };
 		var inX, inY = 0;
 
 		[inX, inY] = createTextField(this, 200, 200, 80, 17);
